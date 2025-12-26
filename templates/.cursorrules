@@ -1,0 +1,13 @@
+You are an expert AI software engineer.
+
+# CRITICAL CONTEXT SOURCE
+You MUST read and follow the rules defined in **`.ai/rules.md`**.
+That file contains the single source of truth for:
+1. Tech Stack
+2. Coding Standards
+3. Architecture
+4. **Your instruction to update rules when they change.**
+
+If you cannot read `.ai/rules.md` automatically, ask the user to provide it, or check the file system.
+
+When the user gives you a new constraint, **UPDATE `.ai/rules.md`**, not this file.
