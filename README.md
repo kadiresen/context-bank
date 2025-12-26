@@ -1,80 +1,92 @@
 # 🏦 Context Bank
 
-> **The `git init` for AI Context.**
-> Standardize, persist, and evolve your project's AI context with a single command.
+<div align="center">
 
-![License](https://img.shields.io/npm/l/context-bank)
-![Version](https://img.shields.io/npm/v/context-bank)
+![npm version](https://img.shields.io/npm/v/context-bank?style=flat-square&color=007acc)
+![license](https://img.shields.io/npm/l/context-bank?style=flat-square&color=green)
+![downloads](https://img.shields.io/npm/dt/context-bank?style=flat-square)
+
+**The `git init` for AI Context.**
+<br/>
+Standardize, persist, and evolve your project's AI context with a single command.
+<br/>
+Works with **Cursor**, **Windsurf**, and **GitHub Copilot**.
+
+</div>
+
+---
 
 ## ⚡ The Problem
-Every time you start a new chat with an AI (Cursor, Windsurf, Copilot), you face the same issues:
-1.  **Amnesia:** You have to re-explain the tech stack and coding rules.
-2.  **Token Waste:** Pasting huge context files burns through your token limit and money.
-3.  **Inconsistency:** `Cursor` follows one rule, `Copilot` follows another.
+Every time you start a new chat with an AI Code Editor, you face the same friction:
+*   ❌ **Amnesia:** "Wait, are we using Tailwind or CSS Modules? I forgot."
+*   ❌ **Token Waste:** Manually pasting huge documentation files burns your quota.
+*   ❌ **Inconsistency:** Cursor follows one rule, while Copilot suggests something else.
 
 ## 🚀 The Solution
-**Context Bank** creates a standardized, self-evolving brain for your project.
+**Context Bank** creates a standardized, **self-evolving brain** for your project.
 
-Run one command:
+It generates a structured `.ai` directory that acts as a **Single Source of Truth (SSOT)** for all your AI tools.
+
+## 📦 Installation & Usage
+
+### Prerequisites
+You need **Node.js 18+** installed on your machine.
+*(Most developers already have this. If not, [download it here](https://nodejs.org/).)*
+
+### Quick Start
+Go to your project root (any language: Python, Go, C#, Node, etc.) and run:
+
 ```bash
 npx context-bank init
 ```
 
-And get a fully configured `.ai` environment that works across **Cursor**, **Windsurf**, and **GitHub Copilot**.
+That's it! 🚀
 
 ## ✨ Key Features
 
-### 1. 🧠 Self-Evolving Rules (The "Living" Standard)
-Instead of static rules, Context Bank sets up a **Single Source of Truth** (`.ai/rules.md`).
-- The AI is instructed to **update this file itself** when you change a preference.
-- *Example:* You tell the AI "Don't use `any`". The AI updates `rules.md`. Next time, it remembers.
+### 🧠 1. Self-Evolving Rules
+Instead of static `.txt` files, Context Bank sets up a living **`rules.md`**.
+*   **Dynamic Learning:** The AI is instructed to *update its own rules* when you state a preference.
+*   **Example:** You tell the AI *"I prefer arrow functions"*. The AI updates `.ai/rules.md`. Next time, it remembers.
 
-### 2. 💾 Smart Memory & Token Saving
-**Stop reading the entire chat history.**
-Context Bank introduces a "State Management" system for your AI:
-- **`.ai/active-context.md` (Short-term Memory):** Keeps track of *current* tasks.
-  - *Benefit:* You can delete your chat history to save tokens, start a fresh session, and the AI knows exactly where it left off by reading this 20-line file instead of a 10k token history.
-- **`.ai/story.md` (Long-term Memory):** logs major milestones and architectural decisions.
+### 💾 2. Smart Memory (Token Saver)
+Stop feeding the AI your entire chat history. Context Bank uses "State Management":
+*   **`active-context.md` (Short-term):** Tracks the *current* task. (e.g., "Fixing the login bug").
+*   **`story.md` (Long-term):** Logs major milestones and architectural decisions.
+*   **The Benefit:** You can start a fresh chat, point the AI to `active-context.md`, and resume work instantly without reading 10k tokens of history.
 
-### 3. 🔌 Tool Agnostic
-Whether you switch from Cursor to Windsurf, or use Copilot in VS Code, they all share the same brain.
-- Generates `.cursorrules` pointing to the master rules.
-- Generates `.windsurfrules` pointing to the master rules.
-- Generates `.github/copilot-instructions.md` pointing to the master rules.
+### 🔌 3. Tool Agnostic
+One brain, multiple interfaces. The `init` command automatically configures:
+*   ✅ **Cursor** (`.cursorrules`)
+*   ✅ **Windsurf** (`.windsurfrules`)
+*   ✅ **GitHub Copilot** (`.github/copilot-instructions.md`)
 
-## 🛠 Usage
+All of them point to the same master `.ai/rules.md`.
 
-1.  **Go to your project root:**
-    ```bash
-    cd my-awesome-project
-    ```
+## 📂 Generated Structure
 
-2.  **Initialize the bank:**
-    ```bash
-    npx context-bank init
-    ```
-
-3.  **That's it!**
-    You will see a new `.ai/` directory.
-    - **Edit `.ai/rules.md`** initially to set your stack (e.g., "React, Tailwind").
-    - **Start coding.** Your AI is now context-aware.
-
-## 📂 File Structure
+When you run the command, your project gets this power-pack:
 
 ```text
-.
+my-project/
 ├── .ai/
-│   ├── rules.md           # The Master Brain. SSOT for all rules.
-│   ├── active-context.md  # Current focus. "What are we doing now?"
-│   └── story.md           # Project history. "What have we done?"
-├── .cursorrules           # Pointer for Cursor AI
-├── .windsurfrules         # Pointer for Windsurf IDE
+│   ├── rules.md           # 🧠 The Master Brain (SSOT)
+│   ├── active-context.md  # 📝 Current focus & next steps
+│   └── story.md           # 📜 Project history & decisions
+├── .cursorrules           # 🔗 Pointer for Cursor
+├── .windsurfrules         # 🔗 Pointer for Windsurf
 └── .github/
-    └── copilot-instructions.md # Pointer for GitHub Copilot
+    └── copilot-instructions.md # 🔗 Pointer for Copilot
 ```
 
 ## 🤝 Contributing
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Whether it's a new template or a bug fix.
+
+1.  Fork the repo
+2.  Create your branch (`git checkout -b feature/amazing-feature`)
+3.  Commit your changes (`git commit -m 'feat: add amazing feature'`)
+4.  Push to the branch (`git push origin feature/amazing-feature`)
+5.  Open a Pull Request
 
 ## 📄 License
-ISC
+MIT © [Kadir Esen](https://github.com/kadiresen)
