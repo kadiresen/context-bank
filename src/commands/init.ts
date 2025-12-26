@@ -59,7 +59,13 @@ export async function initCommand(options: { yes?: boolean }) {
 
   try {
     // List of files/folders to copy
-    const itemsToCopy = [".ai", ".cursorrules", ".windsurfrules", ".github"];
+    const itemsToCopy = [
+      ".ai",
+      ".cursorrules",
+      ".windsurfrules",
+      ".github",
+      "CONVENTIONS.md",
+    ];
 
     for (const item of itemsToCopy) {
       const srcPath = path.join(templateDir, item);

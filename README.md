@@ -55,13 +55,21 @@ Stop feeding the AI your entire chat history. Context Bank uses "State Managemen
 *   **`story.md` (Long-term):** Logs major milestones and architectural decisions.
 *   **The Benefit:** You can start a fresh chat, point the AI to `active-context.md`, and resume work instantly without reading 10k tokens of history.
 
-### 🔌 3. Tool Agnostic
-One brain, multiple interfaces. The `init` command automatically configures:
-*   ✅ **Cursor** (`.cursorrules`)
-*   ✅ **Windsurf** (`.windsurfrules`)
-*   ✅ **GitHub Copilot** (`.github/copilot-instructions.md`)
+### 🔌 3. Universal Tool Support
+One brain, multiple interfaces. The `init` command automatically configures pointers for:
 
-All of them point to the same master `.ai/rules.md`.
+| Tool | Support Type | File Created |
+|------|--------------|--------------|
+| **Cursor** | Native ✅ | `.cursorrules` |
+| **Windsurf** | Native ✅ | `.windsurfrules` |
+| **GitHub Copilot** | Native ✅ | `.github/copilot-instructions.md` |
+| **Aider** (CLI) | Native ✅ | `CONVENTIONS.md` |
+| **Other CLIs** | Manual 🛠️ | (See below) |
+
+#### 🖥️ Using with Gemini CLI, Claude Code, or ChatGPT
+If your tool doesn't automatically read configuration files, just start your session with this **Magic Prompt**:
+
+> "I am starting a session. Please read **`.ai/rules.md`** for project standards and **`.ai/active-context.md`** for the current state. Update these files if plans change."
 
 ## 📂 Generated Structure
 
