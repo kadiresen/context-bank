@@ -1,3 +1,4 @@
+<!-- AI-CONTEXT: .ai/rules.md -->
 # 🏦 Context Bank
 
 <div align="center">

@@ -1,3 +1,5 @@
+# AI CONTEXT: ALWAYS READ THIS FILE FIRST
+
 # 🧠 Project Context & Rules (Master File)
 
 > **AI AGENT INSTRUCTION (CRITICAL):**
@@ -8,7 +10,9 @@
 >
 > 1.  **Capture Preferences:** If the user specifies a preference, update **`rules.md`**.
 > 2.  **Track Progress:** At the end of a task, update **`active-context.md`** with the current status and next steps.
-> 3.  **Log History:** When a major milestone is reached, append it to **`story.md`**.
+> 3.  **Update Roadmap:** When a feature is completed or planned, update **`roadmap.md`**.
+> 4.  **Document Architecture:** When structure/design changes, update **`architecture.md`**.
+> 5.  **Log History:** When a major milestone is reached, append it to **`story.md`**.
 >
 > **TOKEN SAVING STRATEGY:**
 > Do not rely on chat history for long-term memory. Rely on these files.

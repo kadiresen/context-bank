@@ -1,3 +1,5 @@
+# AI CONTEXT: ALWAYS READ THIS FILE FIRST
+
 # Project Rules & Conventions
 
 ## General

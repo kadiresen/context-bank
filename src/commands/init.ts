@@ -100,6 +100,20 @@ export async function initCommand(options: { yes?: boolean }) {
       await fs.writeFile(storyPath, storyContent);
     }
 
+    // Special handling for README.md
+    const readmePath = path.join(targetDir, "README.md");
+    const aiContextMarker = "<!-- AI-CONTEXT: .ai/rules.md -->";
+    
+    if (fs.existsSync(readmePath)) {
+      const readmeContent = await fs.readFile(readmePath, "utf-8");
+      if (!readmeContent.includes(aiContextMarker)) {
+        await fs.writeFile(readmePath, `${aiContextMarker}\n${readmeContent}`);
+      }
+    } else {
+      const projectName = path.basename(targetDir);
+      await fs.writeFile(readmePath, `${aiContextMarker}\n\n# ${projectName}\n`);
+    }
+
     s.stop(chalk.green("Context initialized!"));
 
     outro(
