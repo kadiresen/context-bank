@@ -114,6 +114,29 @@ export async function initCommand(options: { yes?: boolean }) {
       await fs.writeFile(readmePath, `${aiContextMarker}\n\n# ${projectName}\n`);
     }
 
+    // Gemini CLI Integration
+    const geminiDir = path.join(targetDir, ".gemini");
+    const geminiMemoryPath = path.join(geminiDir, "GEMINI.md");
+    const geminiRule = "- [Context Bank] Always check and follow the instructions in .ai/rules.md and .ai/active-context.md.";
+
+    if (!fs.existsSync(geminiDir)) {
+      await fs.ensureDir(geminiDir);
+    }
+
+    if (fs.existsSync(geminiMemoryPath)) {
+      const memoryContent = await fs.readFile(geminiMemoryPath, "utf-8");
+      if (!memoryContent.includes("[Context Bank]")) {
+        // Append to existing memory
+        const newContent = memoryContent.endsWith("\n") 
+          ? `${memoryContent}${geminiRule}\n`
+          : `${memoryContent}\n${geminiRule}\n`;
+        await fs.writeFile(geminiMemoryPath, newContent);
+      }
+    } else {
+      // Create new memory file
+      await fs.writeFile(geminiMemoryPath, `${geminiRule}\n`);
+    }
+
     s.stop(chalk.green("Context initialized!"));
 
     outro(
