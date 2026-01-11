@@ -11,7 +11,7 @@
 <br/>
 Standardize, persist, and evolve your project's AI context with a single command.
 <br/>
-Works with **Cursor**, **Windsurf**, and **GitHub Copilot**.
+Works with **Cursor**, **Windsurf**, **GitHub Copilot**, **Gemini CLI**, **Claude Code**, and **Codex CLI**.
 
 </div>
 
@@ -59,16 +59,24 @@ Stop feeding the AI your entire chat history. Context Bank uses "State Managemen
 ### 🔌 3. Universal Tool Support
 One brain, multiple interfaces. The `init` command automatically configures pointers for:
 
-| Tool | Support Type | File Created |
-|------|--------------|--------------|
+| Tool | Support Type | Integration Method |
+|------|--------------|-------------------|
 | **Cursor** | Native ✅ | `.cursorrules` |
 | **Windsurf** | Native ✅ | `.windsurfrules` |
 | **GitHub Copilot** | Native ✅ | `.github/copilot-instructions.md` |
+| **Claude Code** | Native ✅ | `CLAUDE.md` |
+| **Codex CLI** | Native ✅ | `codex.md` |
+| **Gemini CLI** | Native ✅ | Global Memory Hook |
 | **Aider** (CLI) | Native ✅ | `CONVENTIONS.md` |
-| **Other CLIs** | Manual 🛠️ | (See below) |
 
-#### 🖥️ Using with Gemini CLI, Claude Code, or ChatGPT
-If your tool doesn't automatically read configuration files, just start your session with this **Magic Prompt**:
+#### 🤖 Smart CLI Integration
+For tools like **Gemini CLI** that rely on global memory instead of project files, Context Bank performs a smart handshake:
+1. It detects your global configuration.
+2. It asks permission to add a **Generic Context Rule**.
+3. Once enabled, the CLI will **automatically check for `.ai/rules.md`** in ANY folder you work in. No manual linking required!
+
+#### 🛠️ For Unsupported Tools
+If your tool isn't listed above, just start your session with this **Magic Prompt**:
 
 > "I am starting a session. Please read **`.ai/rules.md`** for project standards and **`.ai/active-context.md`** for the current state. Update these files if plans change."
 
@@ -84,6 +92,8 @@ my-project/
 │   └── story.md           # 📜 Project history & decisions
 ├── .cursorrules           # 🔗 Pointer for Cursor
 ├── .windsurfrules         # 🔗 Pointer for Windsurf
+├── CLAUDE.md              # 🔗 Pointer for Claude Code
+├── codex.md               # 🔗 Pointer for Codex CLI
 └── .github/
     └── copilot-instructions.md # 🔗 Pointer for Copilot
 ```
