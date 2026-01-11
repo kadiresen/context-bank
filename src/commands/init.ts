@@ -120,7 +120,13 @@ export async function initCommand(options: { yes?: boolean }) {
         });
 
         if (addGlobalContext === true) {
-          const genericContextRule = "- [Context Bank] Always check the current working directory for '.ai/rules.md' and '.ai/active-context.md'. If they exist, follow their instructions as the primary source of truth.";
+          const genericContextRule = `
+- [Context Bank] CRITICAL INSTRUCTION:
+  Before processing ANY user request in a new session, you MUST perform this initialization sequence:
+  1. Check if the ".ai/" directory exists in the current working directory.
+  2. If it exists, you MUST explicitly call the "read_file" tool to read ".ai/rules.md" and ".ai/active-context.md".
+  3. Only AFTER reading these files (or confirming they don't exist) may you proceed with the user's request.
+  This is not optional. Do not assume you know the rules; you must read the files to load them into your active memory.`;
           
           const newContent = memoryContent.endsWith("\n") 
             ? `${memoryContent}${genericContextRule}\n`
