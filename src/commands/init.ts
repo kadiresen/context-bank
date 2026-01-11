@@ -1,6 +1,7 @@
 import { intro, outro, confirm, spinner, text } from "@clack/prompts";
 import fs from "fs-extra";
 import path from "path";
+import os from "os";
 import { fileURLToPath } from "url";
 import chalk from "chalk";
 
@@ -32,9 +33,6 @@ export async function initCommand(options: { yes?: boolean }) {
   }
 
   // Determine paths
-  // When running from source (ts-node), templates are in ../../templates
-  // When running from dist (node), templates are in ../../templates (copied during build)
-  // We need to ensure templates are included in the build or package.
   const templateDir = path.resolve(__dirname, "../../templates");
   const targetDir = process.cwd();
 
@@ -72,16 +70,7 @@ export async function initCommand(options: { yes?: boolean }) {
       const destPath = path.join(targetDir, item);
 
       if (fs.existsSync(srcPath)) {
-        // Check if destination exists
         if (fs.existsSync(destPath)) {
-          // For now, we skip existing files to be safe, or we could ask.
-          // Let's just overwrite for MVP or maybe log it.
-          // A better UX would be to ask, but let's stick to simple first.
-          // We will use overwrite=false logic effectively by checking existence.
-
-          // Actually, let's just copy and overwrite for now as this is "init",
-          // but maybe backup?
-          // Let's stick to standard "copy" behavior (overwrite).
           await fs.copy(srcPath, destPath, { overwrite: true });
         } else {
           await fs.copy(srcPath, destPath);
@@ -114,30 +103,37 @@ export async function initCommand(options: { yes?: boolean }) {
       await fs.writeFile(readmePath, `${aiContextMarker}\n\n# ${projectName}\n`);
     }
 
-    // Gemini CLI Integration
-    const geminiDir = path.join(targetDir, ".gemini");
-    const geminiMemoryPath = path.join(geminiDir, "GEMINI.md");
-    const geminiRule = "- [Context Bank] Always check and follow the instructions in .ai/rules.md and .ai/active-context.md.";
-
-    if (!fs.existsSync(geminiDir)) {
-      await fs.ensureDir(geminiDir);
-    }
-
-    if (fs.existsSync(geminiMemoryPath)) {
-      const memoryContent = await fs.readFile(geminiMemoryPath, "utf-8");
-      if (!memoryContent.includes("[Context Bank]")) {
-        // Append to existing memory
-        const newContent = memoryContent.endsWith("\n") 
-          ? `${memoryContent}${geminiRule}\n`
-          : `${memoryContent}\n${geminiRule}\n`;
-        await fs.writeFile(geminiMemoryPath, newContent);
-      }
-    } else {
-      // Create new memory file
-      await fs.writeFile(geminiMemoryPath, `${geminiRule}\n`);
-    }
-
     s.stop(chalk.green("Context initialized!"));
+
+    // Gemini CLI Global Memory Integration
+    const globalGeminiDir = path.join(os.homedir(), ".gemini");
+    const globalGeminiMemoryPath = path.join(globalGeminiDir, "GEMINI.md");
+
+    if (fs.existsSync(globalGeminiMemoryPath)) {
+      const memoryContent = await fs.readFile(globalGeminiMemoryPath, "utf-8");
+      
+      // Only ask if the rule is not already present
+      if (!memoryContent.includes("[Context Bank]")) {
+        const addGlobalContext = await confirm({
+          message: "Found Gemini CLI global memory. Enable automatic context detection for all Context Bank projects?",
+          initialValue: true
+        });
+
+        if (addGlobalContext === true) {
+          const genericContextRule = "- [Context Bank] Always check the current working directory for '.ai/rules.md' and '.ai/active-context.md'. If they exist, follow their instructions as the primary source of truth.";
+          
+          const newContent = memoryContent.endsWith("\n") 
+            ? `${memoryContent}${genericContextRule}\n`
+            : `${memoryContent}\n${genericContextRule}\n`;
+          
+          await fs.writeFile(globalGeminiMemoryPath, newContent);
+          console.log(chalk.green(`✔ Enabled global context awareness for Context Bank.`));
+        }
+      } else {
+        // Optional: Let the user know it's already active
+        // console.log(chalk.gray(`ℹ Global context awareness is already active.`));
+      }
+    }
 
     outro(
       chalk.green(`

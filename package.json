@@ -1,6 +1,6 @@
 {
   "name": "context-bank",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A CLI tool to standardise AI context in projects.",
   "type": "module",
   "bin": {
