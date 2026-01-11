@@ -103,7 +103,33 @@ export async function initCommand(options: { yes?: boolean }) {
       await fs.writeFile(readmePath, `${aiContextMarker}\n\n# ${projectName}\n`);
     }
 
-    s.stop(chalk.green("Context initialized!"));
+    // Codex CLI Integration (codex.md)
+    const codexPath = path.join(targetDir, "codex.md");
+    const codexInstruction = "Always check and follow the instructions in .ai/rules.md and .ai/active-context.md as the primary source of truth.";
+    
+    if (fs.existsSync(codexPath)) {
+      const content = await fs.readFile(codexPath, "utf-8");
+      if (!content.includes(".ai/rules.md")) {
+        // Prepend for priority
+        await fs.writeFile(codexPath, `${codexInstruction}\n\n${content}`);
+      }
+    } else {
+      await fs.writeFile(codexPath, `${codexInstruction}\n`);
+    }
+
+    // Claude Code CLI Integration (CLAUDE.md)
+    const claudePath = path.join(targetDir, "CLAUDE.md");
+    const claudeInstruction = "See .ai/rules.md for project context, tech stack, and coding standards. This is the single source of truth.";
+
+    if (fs.existsSync(claudePath)) {
+      const content = await fs.readFile(claudePath, "utf-8");
+      if (!content.includes(".ai/rules.md")) {
+        // Prepend for priority
+        await fs.writeFile(claudePath, `${claudeInstruction}\n\n${content}`);
+      }
+    } else {
+      await fs.writeFile(claudePath, `${claudeInstruction}\n`);
+    }
 
     // Gemini CLI Global Memory Integration
     const globalGeminiDir = path.join(os.homedir(), ".gemini");
