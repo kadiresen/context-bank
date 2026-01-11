@@ -131,6 +131,8 @@ export async function initCommand(options: { yes?: boolean }) {
       await fs.writeFile(claudePath, `${claudeInstruction}\n`);
     }
 
+    s.stop(chalk.green("Context initialized!"));
+
     // Gemini CLI Global Memory Integration
     const globalGeminiDir = path.join(os.homedir(), ".gemini");
     const globalGeminiMemoryPath = path.join(globalGeminiDir, "GEMINI.md");
