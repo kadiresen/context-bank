@@ -56,6 +56,50 @@ export async function initCommand(options: { yes?: boolean }) {
   s.message("Copying context files...");
 
   try {
+    // Helper for safe copying/merging
+    async function copyOrMerge(src: string, dest: string, isAiDir: boolean = false) {
+      const stats = await fs.stat(src);
+
+      if (stats.isDirectory()) {
+        await fs.ensureDir(dest);
+        const files = await fs.readdir(src);
+        for (const file of files) {
+          await copyOrMerge(
+            path.join(src, file),
+            path.join(dest, file),
+            isAiDir || path.basename(src) === ".ai"
+          );
+        }
+      } else {
+        if (await fs.pathExists(dest)) {
+          if (isAiDir) {
+            // Skip .ai files if they exist to protect project memory
+            return;
+          }
+
+          const srcContent = await fs.readFile(src, "utf-8");
+          const destContent = await fs.readFile(dest, "utf-8");
+
+          if (!destContent.includes(srcContent.trim())) {
+            // Prepend for rules files to ensure priority
+            await fs.writeFile(dest, `${srcContent}\n\n${destContent}`);
+          }
+        } else {
+          await fs.copy(src, dest);
+          
+          // Special handling for new story.md
+          if (path.basename(dest) === "story.md" && isAiDir) {
+            let storyContent = await fs.readFile(dest, "utf-8");
+            storyContent = storyContent.replace(
+              "[Auto-filled by init]",
+              new Date().toISOString().split("T")[0],
+            );
+            await fs.writeFile(dest, storyContent);
+          }
+        }
+      }
+    }
+
     // List of files/folders to copy
     const itemsToCopy = [
       ".ai",
@@ -70,23 +114,8 @@ export async function initCommand(options: { yes?: boolean }) {
       const destPath = path.join(targetDir, item);
 
       if (fs.existsSync(srcPath)) {
-        if (fs.existsSync(destPath)) {
-          await fs.copy(srcPath, destPath, { overwrite: true });
-        } else {
-          await fs.copy(srcPath, destPath);
-        }
+        await copyOrMerge(srcPath, destPath);
       }
-    }
-
-    // Special handling for story.md date
-    const storyPath = path.join(targetDir, ".ai/story.md");
-    if (fs.existsSync(storyPath)) {
-      let storyContent = await fs.readFile(storyPath, "utf-8");
-      storyContent = storyContent.replace(
-        "[Auto-filled by init]",
-        new Date().toISOString().split("T")[0],
-      );
-      await fs.writeFile(storyPath, storyContent);
     }
 
     // Special handling for README.md
