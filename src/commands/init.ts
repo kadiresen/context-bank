@@ -103,10 +103,13 @@ export async function initCommand(options: { yes?: boolean }) {
     // List of files/folders to copy
     const itemsToCopy = [
       ".ai",
+      ".cursor",
       ".cursorrules",
+      ".windsurf",
       ".windsurfrules",
       ".github",
       "CONVENTIONS.md",
+      "GEMINI.md",
     ];
 
     for (const item of itemsToCopy) {

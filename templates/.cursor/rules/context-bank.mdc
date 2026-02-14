@@ -1,0 +1,14 @@
+---
+description: Global project rules and context source of truth
+globs: *
+---
+
+# Context Bank Integration
+
+You MUST read and follow the rules defined in **`.ai/rules.md`**.
+This file is the Single Source of Truth for:
+1. Tech Stack
+2. Coding Standards
+3. Architecture
+
+Before starting any task, verify the current state in **`.ai/active-context.md`**.
