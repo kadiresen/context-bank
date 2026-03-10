@@ -3,9 +3,9 @@
 ## Phase 1: Templating and Init Command
 - [x] Project Setup (package.json, tsconfig)
 - [x] Dogfooding (Self-implementation of .ai folder)
-- [ ] Create basic template files (`.ai/rules.md`, `.cursorrules`, etc.) in `templates/`
-- [ ] Implement `init` command using Commander and Clack
-- [ ] File system operations (copying templates)
+- [x] Create basic template files (`.ai/rules.md`, `.cursorrules`, etc.) in `templates/`
+- [x] Implement `init` command using Commander and Clack
+- [x] File system operations (copying templates)
 
 ## Phase 2: Advanced Configuration
 - [ ] Dynamic template selection (React, Node, Python, etc.)
