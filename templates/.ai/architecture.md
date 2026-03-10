@@ -1,10 +1,16 @@
 # 🏗️ Project Architecture
 
-> **AI INSTRUCTION:**
-> Update this file when:
-> 1. New architectural decisions are made.
-> 2. The system design evolves.
-> 3. New integrations or dependencies are added.
+> **⚠️ MANDATORY AI AGENT INSTRUCTION:**
+>
+> You MUST update this file whenever:
+> 1. A new file, module, or directory is created.
+> 2. The project structure changes.
+> 3. A new dependency or integration is added.
+> 4. Data flow or system design is modified.
+> 5. An architectural decision is made (document the reasoning).
+>
+> **After any structural change, update the Directory Structure section below.**
+> **DO NOT SKIP THIS UPDATE.**
 
 ## 📐 High-Level Design
 [Describe the high-level architecture here]

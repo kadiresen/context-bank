@@ -1,10 +1,15 @@
 # 🗺️ Project Roadmap
 
-> **AI INSTRUCTION:**
-> Update this file when:
-> 1. A new feature is planned.
-> 2. A feature is completed (mark with [x]).
-> 3. Priorities change.
+> **⚠️ MANDATORY AI AGENT INSTRUCTION:**
+>
+> You MUST update this file when:
+> 1. A feature is completed → move it to Completed and mark with `[x]`.
+> 2. A new feature is discussed or planned → add it to Upcoming or Backlog.
+> 3. Priorities change → reorder items accordingly.
+> 4. A task is started → mark it as in-progress with `[~]`.
+>
+> **After completing any feature, immediately mark it as done here.**
+> **DO NOT SKIP THIS UPDATE.**
 
 ## 🚀 Upcoming
 - [ ] [Feature 1]

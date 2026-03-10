@@ -137,7 +137,14 @@ export async function initCommand(options: { yes?: boolean }) {
 
     // Codex CLI Integration (codex.md)
     const codexPath = path.join(targetDir, "codex.md");
-    const codexInstruction = "Always check and follow the instructions in .ai/rules.md and .ai/active-context.md as the primary source of truth.";
+    const codexInstruction = `Always check and follow the instructions in .ai/rules.md and .ai/active-context.md as the primary source of truth.
+
+MANDATORY: After EVERY task, you MUST update these .ai/ files:
+1. active-context.md — Current state, recent changes, next steps.
+2. roadmap.md — Mark completed features [x], add planned ones.
+3. story.md — Append dated entry for milestones/decisions.
+4. architecture.md — Update on structural/design changes.
+Do NOT ask permission. Do NOT skip. Just update them.`;
     
     if (fs.existsSync(codexPath)) {
       const content = await fs.readFile(codexPath, "utf-8");
@@ -151,7 +158,14 @@ export async function initCommand(options: { yes?: boolean }) {
 
     // Claude Code CLI Integration (CLAUDE.md)
     const claudePath = path.join(targetDir, "CLAUDE.md");
-    const claudeInstruction = "See .ai/rules.md for project context, tech stack, and coding standards. This is the single source of truth.";
+    const claudeInstruction = `See .ai/rules.md for project context, tech stack, and coding standards. This is the single source of truth.
+
+MANDATORY: After EVERY task, you MUST update these .ai/ files:
+1. active-context.md — Current state, recent changes, next steps.
+2. roadmap.md — Mark completed features [x], add planned ones.
+3. story.md — Append dated entry for milestones/decisions.
+4. architecture.md — Update on structural/design changes.
+Do NOT ask permission. Do NOT skip. Just update them.`;
 
     if (fs.existsSync(claudePath)) {
       const content = await fs.readFile(claudePath, "utf-8");

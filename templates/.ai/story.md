@@ -1,11 +1,21 @@
 # 📜 Project Story & Decisions Log
 
-> **AI AGENT INSTRUCTION:**
-> This file records the **history and evolution** of the project.
-> append to this file when:
-> 1. A major feature is completed.
-> 2. A significant architectural decision is made (ADR).
-> 3. The user clarifies the long-term vision.
+> **⚠️ MANDATORY AI AGENT INSTRUCTION:**
+>
+> You MUST append a dated entry to this file when ANY of the following occurs:
+> 1. A feature is completed or significantly progressed.
+> 2. An architectural or design decision is made.
+> 3. A major bug is fixed.
+> 4. The user clarifies project vision or direction.
+> 5. A dependency or tool is added/removed.
+>
+> **Format each entry as:**
+> ### YYYY-MM-DD - [Brief Title]
+> - What was done
+> - Why it was done (if relevant)
+> - Impact or outcome
+>
+> **DO NOT SKIP THIS. Every significant action deserves a log entry.**
 
 ## 📅 Project Inception
 - **Date:** [Auto-filled by init]
@@ -17,4 +27,4 @@
 - Project structure created.
 - Basic configuration files added.
 
-*(AI: Append new major events below...)*
+*(AI: Append new entries below. Never delete existing entries.)*
