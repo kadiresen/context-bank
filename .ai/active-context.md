@@ -1,14 +1,15 @@
 # Active Context
 
 ## Current State
-- **PR #1 Maintenance:** Successfully pushed the `package.json` version bump (0.0.10) to the head repository (`musakirkkeseli/context-bank`).
-- **Phase 1 Completion:** The core CLI `init` command and template structure are now fully functional and dogfooded.
-- **Repository State:** Branch `feat/template-context-updates` is active and synchronized with the PR fork.
+- **Maintenance:** Fixed the `lint` script by installing ESLint v10 with flat configuration.
+- **Workflow Improvement:** Modified the `build` script to automatically run `lint` before compilation, ensuring all code meets quality standards.
+- **Phase 1 Completion:** The core CLI `init` command and template structure are fully functional.
 
 ## Recent Changes
+- Fixed the failing `lint` script by installing `eslint`, `@eslint/js`, and `typescript-eslint`.
+- Created `eslint.config.js` with modern flat configuration.
+- Resolved a lint error in `src/commands/init.ts` (unused `text` import).
 - Updated `package.json` version to `0.0.10`.
-- Corrected the PR update workflow by pushing to the correct head repository instead of the local origin fork.
-- Initialized project-level `.ai/active-context.md` and `.ai/story.md` for consistent project tracking.
 
 ## Next Steps
 - [ ] Finalize review of PR #1 and merge.

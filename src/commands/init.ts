@@ -1,4 +1,4 @@
-import { intro, outro, confirm, spinner, text } from "@clack/prompts";
+import { intro, outro, confirm, spinner } from "@clack/prompts";
 import fs from "fs-extra";
 import path from "path";
 import os from "os";
@@ -175,6 +175,23 @@ Do NOT ask permission. Do NOT skip. Just update them.`;
       }
     } else {
       await fs.writeFile(claudePath, `${claudeInstruction}\n`);
+    }
+
+    // Git merge strategies for branch-aware context (.gitattributes)
+    const gitattrsPath = path.join(targetDir, ".gitattributes");
+    const mergeRules = `# Context Bank: branch-aware merge strategies
+# active-context.md is branch-specific — on merge, target branch wins (no conflict)
+.ai/active-context.md merge=ours
+# story.md entries are additive — on merge, combine both sides (no conflict)
+.ai/story.md merge=union`;
+
+    if (fs.existsSync(gitattrsPath)) {
+      const content = await fs.readFile(gitattrsPath, "utf-8");
+      if (!content.includes("Context Bank")) {
+        await fs.writeFile(gitattrsPath, `${content}\n\n${mergeRules}\n`);
+      }
+    } else {
+      await fs.writeFile(gitattrsPath, `${mergeRules}\n`);
     }
 
     s.stop(chalk.green("Context initialized!"));

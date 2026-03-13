@@ -2,6 +2,7 @@
 
 ## Phase 1: Templating and Init Command
 - [x] Project Setup (package.json, tsconfig)
+- [x] Linting and Formatting setup (ESLint v10, Prettier)
 - [x] Dogfooding (Self-implementation of .ai folder)
 - [x] Create basic template files (`.ai/rules.md`, `.cursorrules`, etc.) in `templates/`
 - [x] Implement `init` command using Commander and Clack
