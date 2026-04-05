@@ -104,9 +104,7 @@ export async function initCommand(options: { yes?: boolean }) {
     const itemsToCopy = [
       ".ai",
       ".cursor",
-      ".cursorrules",
       ".windsurf",
-      ".windsurfrules",
       ".github",
       "CONVENTIONS.md",
       "GEMINI.md",

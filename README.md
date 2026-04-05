@@ -61,8 +61,8 @@ One brain, multiple interfaces. The `init` command automatically configures poin
 
 | Tool | Support Type | Integration Method |
 |------|--------------|-------------------|
-| **Cursor** | Native ✅ | `.cursorrules` |
-| **Windsurf** | Native ✅ | `.windsurfrules` |
+| **Cursor** | Native ✅ | `.cursor/rules/` |
+| **Windsurf** | Native ✅ | `.windsurf/rules/` |
 | **GitHub Copilot** | Native ✅ | `.github/copilot-instructions.md` |
 | **Claude Code** | Native ✅ | `CLAUDE.md` |
 | **Codex CLI** | Native ✅ | `AGENTS.md` |
@@ -90,12 +90,18 @@ my-project/
 │   ├── rules.md           # 🧠 The Master Brain (SSOT)
 │   ├── active-context.md  # 📝 Current focus & next steps
 │   └── story.md           # 📜 Project history & decisions
-├── .cursorrules           # 🔗 Pointer for Cursor
-├── .windsurfrules         # 🔗 Pointer for Windsurf
+├── .cursor/
+│   └── rules/
+│       └── context-bank.mdc  # 🔗 Rules for Cursor
+├── .windsurf/
+│   └── rules/
+│       └── context-bank.md   # 🔗 Rules for Windsurf
 ├── CLAUDE.md              # 🔗 Pointer for Claude Code
 ├── AGENTS.md              # 🔗 Pointer for Codex CLI / OpenAI agents
-└── .github/
-    └── copilot-instructions.md # 🔗 Pointer for Copilot
+├── .github/
+│   └── copilot-instructions.md # 🔗 Pointer for Copilot
+├── CONVENTIONS.md         # 🔗 Pointer for Aider
+└── GEMINI.md              # 🔗 Pointer for Gemini CLI
 ```
 
 ## 🤝 Contributing

@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # Windsurf Project Rules
 
 You MUST read and follow the rules defined in **`.ai/rules.md`**.
