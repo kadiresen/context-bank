@@ -1,6 +1,6 @@
 {
   "name": "context-bank",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A CLI tool to standardise AI context in projects.",
   "type": "module",
   "bin": {
@@ -11,7 +11,8 @@
     "dev": "ts-node src/index.ts",
     "start": "node dist/index.js",
     "lint": "eslint src/**/*.ts",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "prepublishOnly": "tsc"
   },
   "keywords": [
     "cli",
