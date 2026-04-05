@@ -124,7 +124,7 @@ export async function initCommand(options: { yes?: boolean }) {
     // Special handling for README.md
     const readmePath = path.join(targetDir, "README.md");
     const aiContextMarker = "<!-- AI-CONTEXT: .ai/rules.md -->";
-    
+
     if (fs.existsSync(readmePath)) {
       const readmeContent = await fs.readFile(readmePath, "utf-8");
       if (!readmeContent.includes(aiContextMarker)) {
@@ -135,47 +135,33 @@ export async function initCommand(options: { yes?: boolean }) {
       await fs.writeFile(readmePath, `${aiContextMarker}\n\n# ${projectName}\n`);
     }
 
-    // Codex CLI Integration (codex.md)
-    const codexPath = path.join(targetDir, "codex.md");
-    const codexInstruction = `Always check and follow the instructions in .ai/rules.md and .ai/active-context.md as the primary source of truth.
-
-MANDATORY: After EVERY task, you MUST update these .ai/ files:
-1. active-context.md — Current state, recent changes, next steps.
-2. roadmap.md — Mark completed features [x], add planned ones.
-3. story.md — Append dated entry for milestones/decisions.
-4. architecture.md — Update on structural/design changes.
-Do NOT ask permission. Do NOT skip. Just update them.`;
-    
-    if (fs.existsSync(codexPath)) {
-      const content = await fs.readFile(codexPath, "utf-8");
-      if (!content.includes(".ai/rules.md")) {
-        // Prepend for priority
-        await fs.writeFile(codexPath, `${codexInstruction}\n\n${content}`);
+    // Helper: write a pointer file that directs the AI tool to .ai/rules.md
+    async function writePointerFile(filename: string, instruction: string) {
+      const filePath = path.join(targetDir, filename);
+      if (fs.existsSync(filePath)) {
+        const content = await fs.readFile(filePath, "utf-8");
+        if (!content.includes(".ai/rules.md")) {
+          await fs.writeFile(filePath, `${instruction}\n\n${content}`);
+        }
+      } else {
+        await fs.writeFile(filePath, `${instruction}\n`);
       }
-    } else {
-      await fs.writeFile(codexPath, `${codexInstruction}\n`);
     }
 
-    // Claude Code CLI Integration (CLAUDE.md)
-    const claudePath = path.join(targetDir, "CLAUDE.md");
-    const claudeInstruction = `See .ai/rules.md for project context, tech stack, and coding standards. This is the single source of truth.
-
-MANDATORY: After EVERY task, you MUST update these .ai/ files:
+    const mandatoryUpdateBlock = `MANDATORY: After EVERY task, you MUST update these .ai/ files:
 1. active-context.md — Current state, recent changes, next steps.
 2. roadmap.md — Mark completed features [x], add planned ones.
 3. story.md — Append dated entry for milestones/decisions.
 4. architecture.md — Update on structural/design changes.
 Do NOT ask permission. Do NOT skip. Just update them.`;
 
-    if (fs.existsSync(claudePath)) {
-      const content = await fs.readFile(claudePath, "utf-8");
-      if (!content.includes(".ai/rules.md")) {
-        // Prepend for priority
-        await fs.writeFile(claudePath, `${claudeInstruction}\n\n${content}`);
-      }
-    } else {
-      await fs.writeFile(claudePath, `${claudeInstruction}\n`);
-    }
+    // AGENTS.md (Codex CLI, OpenAI agents)
+    await writePointerFile("AGENTS.md",
+      `Always check and follow the instructions in .ai/rules.md and .ai/active-context.md as the primary source of truth.\n\n${mandatoryUpdateBlock}`);
+
+    // CLAUDE.md (Claude Code CLI)
+    await writePointerFile("CLAUDE.md",
+      `See .ai/rules.md for project context, tech stack, and coding standards. This is the single source of truth.\n\n${mandatoryUpdateBlock}`);
 
     // Git merge strategies for branch-aware context (.gitattributes)
     const gitattrsPath = path.join(targetDir, ".gitattributes");

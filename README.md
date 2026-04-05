@@ -65,7 +65,7 @@ One brain, multiple interfaces. The `init` command automatically configures poin
 | **Windsurf** | Native ✅ | `.windsurfrules` |
 | **GitHub Copilot** | Native ✅ | `.github/copilot-instructions.md` |
 | **Claude Code** | Native ✅ | `CLAUDE.md` |
-| **Codex CLI** | Native ✅ | `codex.md` |
+| **Codex CLI** | Native ✅ | `AGENTS.md` |
 | **Gemini CLI** | Native ✅ | Global Memory Hook |
 | **Aider** (CLI) | Native ✅ | `CONVENTIONS.md` |
 
@@ -93,7 +93,7 @@ my-project/
 ├── .cursorrules           # 🔗 Pointer for Cursor
 ├── .windsurfrules         # 🔗 Pointer for Windsurf
 ├── CLAUDE.md              # 🔗 Pointer for Claude Code
-├── codex.md               # 🔗 Pointer for Codex CLI
+├── AGENTS.md              # 🔗 Pointer for Codex CLI / OpenAI agents
 └── .github/
     └── copilot-instructions.md # 🔗 Pointer for Copilot
 ```

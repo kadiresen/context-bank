@@ -14,7 +14,7 @@ Context Bank is a CLI tool designed to scaffold AI context files into existing p
   - Detects project type (optional future feature).
   - Prompts user for preferences using `clack`.
   - Copies templates to the target project.
-  - Merges instructions into existing README.md, CLAUDE.md, and codex.md files.
+  - Merges instructions into existing README.md, CLAUDE.md, and AGENTS.md files.
   - Integrates with Gemini CLI global memory.
 
 ### 3. Template Engine
