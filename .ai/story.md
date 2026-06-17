@@ -1,5 +1,11 @@
 # Story
 
+## 2026-06-17: OpenCode support + README completeness (v1.1.1)
+- **OpenCode:** Verified no code change is needed — OpenCode reads project-root `AGENTS.md` (legacy fallback `CLAUDE.md`), both of which `init` already writes. Added it to the README integration table and tagline for visibility.
+- **README polish:** Expanded the "Smart Memory" section to also list `roadmap.md` and `architecture.md` (was only `active-context.md` + `story.md`).
+- **Why:** AGENTS.md being the canonical file means new AGENTS.md-native tools (like OpenCode) are supported for free; the gap was documentation, not behavior.
+- Patch version bump 1.1.0 → 1.1.1 (docs only, no code change).
+
 ## 2026-06-17: 2026 Convention Modernization (v1.1.0)
 - **Audit:** Researched mid-2026 conventions for every supported tool (Cursor, Windsurf, Copilot, Claude Code, Codex, Gemini, Aider) against the early-2025 assumptions baked into the templates.
 - **Why:** AI tooling moved fast — most notably `AGENTS.md` became the cross-tool open standard (OpenAI, Aug 2025 → Agentic AI Foundation, Dec 2025), and two integrations had drifted into being broken.

@@ -11,7 +11,7 @@
 <br/>
 Standardize, persist, and evolve your project's AI context with a single command.
 <br/>
-Works with **Cursor**, **Windsurf**, **GitHub Copilot**, **Gemini CLI**, **Claude Code**, **Codex CLI**, and **Aider** — built on the cross-tool **`AGENTS.md`** standard.
+Works with **Cursor**, **Windsurf**, **GitHub Copilot**, **Gemini CLI**, **Claude Code**, **Codex CLI**, **OpenCode**, and **Aider** — built on the cross-tool **`AGENTS.md`** standard.
 
 </div>
 
@@ -53,6 +53,8 @@ Instead of static `.txt` files, Context Bank sets up a living **`rules.md`**.
 ### 💾 2. Smart Memory (Token Saver)
 Stop feeding the AI your entire chat history. Context Bank uses "State Management":
 *   **`active-context.md` (Short-term):** Tracks the *current* task. (e.g., "Fixing the login bug").
+*   **`roadmap.md` (Mid-term):** Planned, in-progress, and completed features.
+*   **`architecture.md` (Structural):** Directory layout, data flow, and key design decisions.
 *   **`story.md` (Long-term):** Logs major milestones and architectural decisions.
 *   **The Benefit:** You can start a fresh chat, point the AI to `active-context.md`, and resume work instantly without reading 10k tokens of history.
 
@@ -66,6 +68,7 @@ One brain, multiple interfaces. The `init` command automatically configures poin
 | **GitHub Copilot** | Native ✅ | `.github/copilot-instructions.md` (+ reads `AGENTS.md`) |
 | **Claude Code** | Native ✅ | `CLAUDE.md` (imports `AGENTS.md`) |
 | **Codex CLI** | Native ✅ | `AGENTS.md` |
+| **OpenCode** | Native ✅ | reads `AGENTS.md` (falls back to `CLAUDE.md`) |
 | **Gemini CLI** | Native ✅ | `GEMINI.md` + project `.gemini/settings.json` |
 | **Aider** (CLI) | Native ✅ | `CONVENTIONS.md` (wired via `.aider.conf.yml`) |
 

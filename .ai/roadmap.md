@@ -16,6 +16,7 @@
 - [x] Claude Stop-hook reminder via `.claude/settings.json`
 - [x] Global `~/.codex/AGENTS.md` handshake (Gemini parity)
 - [x] Update README integration table + structure tree
+- [x] Document OpenCode support (AGENTS.md-native) in README (v1.1.1)
 
 ## Phase 2: Advanced Configuration
 - [ ] Dynamic template selection (React, Node, Python, etc.)

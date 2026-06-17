@@ -1,6 +1,7 @@
 # Active Context
 
 ## Current State
+- **v1.1.1:** Documented OpenCode support and rounded out the README; patch bump (docs only).
 - **2026 Convention Modernization (v1.1.0):** Audited all tool integrations against mid-2026 conventions and fixed broken/outdated points.
 - **AGENTS.md is now the canonical cross-tool file.** It carries the rich instructions; `CLAUDE.md` imports it via `@AGENTS.md`.
 - Core CLI `init` and templates remain fully functional; build (lint + tsc), smoke test, and idempotency test all pass.
