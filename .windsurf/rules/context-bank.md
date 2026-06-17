@@ -1,17 +1,14 @@
 ---
-description: Global project rules and context source of truth
-alwaysApply: true
+trigger: always_on
 ---
 
-# Context Bank Integration
+# Windsurf Project Rules
 
 You MUST read and follow the rules defined in **`.ai/rules.md`**.
-This file is the Single Source of Truth for:
-1. Tech Stack
-2. Coding Standards
-3. Architecture
+This file is the Single Source of Truth for this project.
 
-Before starting any task, verify the current state in **`.ai/active-context.md`**.
+1. **Read `.ai/rules.md`** first.
+2. **Read `.ai/active-context.md`** to understand the current task.
 
 ## MANDATORY: Update Context Files After Every Task
 

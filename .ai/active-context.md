@@ -1,17 +1,20 @@
 # Active Context
 
 ## Current State
-- **Maintenance:** Fixed the `lint` script by installing ESLint v10 with flat configuration.
-- **Workflow Improvement:** Modified the `build` script to automatically run `lint` before compilation, ensuring all code meets quality standards.
-- **Phase 1 Completion:** The core CLI `init` command and template structure are fully functional.
+- **2026 Convention Modernization (v1.1.0):** Audited all tool integrations against mid-2026 conventions and fixed broken/outdated points.
+- **AGENTS.md is now the canonical cross-tool file.** It carries the rich instructions; `CLAUDE.md` imports it via `@AGENTS.md`.
+- Core CLI `init` and templates remain fully functional; build (lint + tsc), smoke test, and idempotency test all pass.
 
 ## Recent Changes
-- Fixed the failing `lint` script by installing `eslint`, `@eslint/js`, and `typescript-eslint`.
-- Created `eslint.config.js` with modern flat configuration.
-- Resolved a lint error in `src/commands/init.ts` (unused `text` import).
-- Updated `package.json` version to `0.0.10`.
+- **Cursor fix:** template `.mdc` now uses `alwaysApply: true` (was `globs: *`, which left the rule Agent-Requested instead of always-on).
+- **Aider fix:** `init` now generates/merges `.aider.conf.yml` with `read: CONVENTIONS.md` (Aider does not auto-read CONVENTIONS.md).
+- **AGENTS.md reframed** as the cross-tool standard; `CLAUDE.md` switched to `@AGENTS.md` import, removing the duplicated "mandatory update" block.
+- **Gemini:** added project-scoped `.gemini/settings.json` (`context.fileName`) alongside the existing global hook.
+- **Claude enforcement:** `init` writes a `.claude/settings.json` Stop-hook reminder to update `.ai/` files.
+- **Codex parity:** added an optional global `~/.codex/AGENTS.md` handshake mirroring the Gemini one.
+- README integration table + generated-structure tree updated; version bumped to `1.1.0`.
 
 ## Next Steps
-- [ ] Finalize review of PR #1 and merge.
-- [ ] Start **Phase 2: Advanced Configuration** (Dynamic template selection).
-- [ ] Implement `context-bank.json` configuration support.
+- [ ] Manually verify the Claude Stop hook surfaces correctly in a real Claude Code session.
+- [ ] Consider publishing v1.1.0 to npm.
+- [ ] Start **Phase 2: Advanced Configuration** (dynamic template selection, `context-bank.json`).

@@ -11,7 +11,7 @@
 <br/>
 Standardize, persist, and evolve your project's AI context with a single command.
 <br/>
-Works with **Cursor**, **Windsurf**, **GitHub Copilot**, **Gemini CLI**, **Claude Code**, and **Codex CLI**.
+Works with **Cursor**, **Windsurf**, **GitHub Copilot**, **Gemini CLI**, **Claude Code**, **Codex CLI**, and **Aider** — built on the cross-tool **`AGENTS.md`** standard.
 
 </div>
 
@@ -61,19 +61,24 @@ One brain, multiple interfaces. The `init` command automatically configures poin
 
 | Tool | Support Type | Integration Method |
 |------|--------------|-------------------|
-| **Cursor** | Native ✅ | `.cursor/rules/` |
-| **Windsurf** | Native ✅ | `.windsurf/rules/` |
-| **GitHub Copilot** | Native ✅ | `.github/copilot-instructions.md` |
-| **Claude Code** | Native ✅ | `CLAUDE.md` |
+| **Cursor** | Native ✅ | `.cursor/rules/` (+ reads `AGENTS.md`) |
+| **Windsurf** | Native ✅ | `.windsurf/rules/` (+ reads `AGENTS.md`) |
+| **GitHub Copilot** | Native ✅ | `.github/copilot-instructions.md` (+ reads `AGENTS.md`) |
+| **Claude Code** | Native ✅ | `CLAUDE.md` (imports `AGENTS.md`) |
 | **Codex CLI** | Native ✅ | `AGENTS.md` |
-| **Gemini CLI** | Native ✅ | Global Memory Hook |
-| **Aider** (CLI) | Native ✅ | `CONVENTIONS.md` |
+| **Gemini CLI** | Native ✅ | `GEMINI.md` + project `.gemini/settings.json` |
+| **Aider** (CLI) | Native ✅ | `CONVENTIONS.md` (wired via `.aider.conf.yml`) |
+
+> 🌐 **`AGENTS.md` is the cross-tool open standard** ([agents.md](https://agents.md/), governed by the Agentic AI Foundation). Context Bank writes a rich `AGENTS.md` as the canonical instruction file — Codex, Cursor, Copilot, Windsurf, Jules, Zed and others read it natively, and `CLAUDE.md` imports it via `@AGENTS.md`. All of them ultimately point to your `.ai/rules.md`.
 
 #### 🤖 Smart CLI Integration
-For tools like **Gemini CLI** that rely on global memory instead of project files, Context Bank performs a smart handshake:
-1. It detects your global configuration.
-2. It asks permission to add a **Generic Context Rule**.
-3. Once enabled, the CLI will **automatically check for `.ai/rules.md`** in ANY folder you work in. No manual linking required!
+Context Bank wires up CLI tools two ways:
+
+**Project-scoped (preferred).** No global state — the config lives in your repo:
+*   **Gemini CLI:** writes `.gemini/settings.json` (`context.fileName`) so `AGENTS.md`, `GEMINI.md`, and `.ai/rules.md` load automatically for this project.
+*   **Aider:** writes `.aider.conf.yml` with `read: CONVENTIONS.md` (Aider does **not** auto-load `CONVENTIONS.md` otherwise).
+
+**Global handshake (opt-in).** For **Gemini CLI** and **Codex CLI**, if a global config is detected, Context Bank asks permission to add a Generic Context Rule to `~/.gemini/GEMINI.md` / `~/.codex/AGENTS.md`. Once enabled, the CLI will **automatically check for `.ai/rules.md`** in ANY folder you work in.
 
 #### 🛠️ For Unsupported Tools
 If your tool isn't listed above, just start your session with this **Magic Prompt**:
@@ -89,19 +94,20 @@ my-project/
 ├── .ai/
 │   ├── rules.md           # 🧠 The Master Brain (SSOT)
 │   ├── active-context.md  # 📝 Current focus & next steps
+│   ├── roadmap.md         # 🗺️ Planned & completed features
+│   ├── architecture.md    # 🏗️ Structure & design decisions
 │   └── story.md           # 📜 Project history & decisions
-├── .cursor/
-│   └── rules/
-│       └── context-bank.mdc  # 🔗 Rules for Cursor
-├── .windsurf/
-│   └── rules/
-│       └── context-bank.md   # 🔗 Rules for Windsurf
-├── CLAUDE.md              # 🔗 Pointer for Claude Code
-├── AGENTS.md              # 🔗 Pointer for Codex CLI / OpenAI agents
-├── .github/
-│   └── copilot-instructions.md # 🔗 Pointer for Copilot
+├── AGENTS.md              # 🌐 Cross-tool standard (Codex, Cursor, Copilot, …)
+├── CLAUDE.md              # 🔗 Claude Code (imports AGENTS.md)
+├── GEMINI.md              # 🔗 Pointer for Gemini CLI
 ├── CONVENTIONS.md         # 🔗 Pointer for Aider
-└── GEMINI.md              # 🔗 Pointer for Gemini CLI
+├── .cursor/rules/context-bank.mdc      # 🔗 Rules for Cursor
+├── .windsurf/rules/context-bank.md     # 🔗 Rules for Windsurf
+├── .github/copilot-instructions.md     # 🔗 Pointer for Copilot
+├── .gemini/settings.json   # ⚙️ Auto-loads context for Gemini CLI
+├── .aider.conf.yml         # ⚙️ Wires CONVENTIONS.md into Aider
+├── .claude/settings.json   # ⚙️ Stop-hook reminder to update .ai/ files
+└── .gitattributes          # 🔀 Branch-aware merge strategies for .ai/
 ```
 
 ## 🤝 Contributing

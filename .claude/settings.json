@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"systemMessage\":\"🏦 Context Bank: update .ai/active-context.md, roadmap.md, story.md and architecture.md if this task changed anything.\"}'"
+          }
+        ]
+      }
+    ]
+  }
+}

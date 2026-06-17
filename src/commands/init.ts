@@ -133,12 +133,18 @@ export async function initCommand(options: { yes?: boolean }) {
       await fs.writeFile(readmePath, `${aiContextMarker}\n\n# ${projectName}\n`);
     }
 
-    // Helper: write a pointer file that directs the AI tool to .ai/rules.md
-    async function writePointerFile(filename: string, instruction: string) {
+    // Helper: write a pointer file that directs the AI tool to .ai/rules.md.
+    // `marker` is the substring used to detect a prior Context Bank injection
+    // (so we don't prepend twice). Defaults to the SSOT path.
+    async function writePointerFile(
+      filename: string,
+      instruction: string,
+      marker: string = ".ai/rules.md",
+    ) {
       const filePath = path.join(targetDir, filename);
       if (fs.existsSync(filePath)) {
         const content = await fs.readFile(filePath, "utf-8");
-        if (!content.includes(".ai/rules.md")) {
+        if (!content.includes(marker)) {
           await fs.writeFile(filePath, `${instruction}\n\n${content}`);
         }
       } else {
@@ -153,13 +159,18 @@ export async function initCommand(options: { yes?: boolean }) {
 4. architecture.md — Update on structural/design changes.
 Do NOT ask permission. Do NOT skip. Just update them.`;
 
-    // AGENTS.md (Codex CLI, OpenAI agents)
+    // AGENTS.md — the cross-tool open standard (Agentic AI Foundation, 2025).
+    // Read natively by Codex, Cursor, GitHub Copilot, Windsurf, Jules, Zed and
+    // others, so this is the canonical instruction file; tool-specific files
+    // point here or are derived from it.
     await writePointerFile("AGENTS.md",
-      `Always check and follow the instructions in .ai/rules.md and .ai/active-context.md as the primary source of truth.\n\n${mandatoryUpdateBlock}`);
+      `# AI Agent Instructions\n\nThis project uses **Context Bank**. The single source of truth for tech stack, coding standards, and architecture is **\`.ai/rules.md\`**. Before starting any task, also read **\`.ai/active-context.md\`** for the current state.\n\n\`AGENTS.md\` is the cross-tool standard read by Codex, Cursor, GitHub Copilot, Windsurf, Jules, Zed and other agents. Tool-specific files (CLAUDE.md, GEMINI.md, …) point back here or to \`.ai/rules.md\`.\n\n${mandatoryUpdateBlock}`);
 
-    // CLAUDE.md (Claude Code CLI)
+    // CLAUDE.md (Claude Code) — Claude Code does not read AGENTS.md natively but
+    // supports @-imports, so we import AGENTS.md instead of duplicating it.
     await writePointerFile("CLAUDE.md",
-      `See .ai/rules.md for project context, tech stack, and coding standards. This is the single source of truth.\n\n${mandatoryUpdateBlock}`);
+      `@AGENTS.md\n\n## Claude Code\nThe instructions imported from \`AGENTS.md\` above apply. \`.ai/rules.md\` is the single source of truth for project context, tech stack, and coding standards; \`.ai/active-context.md\` holds the current state.`,
+      "@AGENTS.md");
 
     // Git merge strategies for branch-aware context (.gitattributes)
     const gitattrsPath = path.join(targetDir, ".gitattributes");
@@ -176,6 +187,81 @@ Do NOT ask permission. Do NOT skip. Just update them.`;
       }
     } else {
       await fs.writeFile(gitattrsPath, `${mergeRules}\n`);
+    }
+
+    // Aider: CONVENTIONS.md is NOT auto-loaded — it must be wired via the
+    // `read:` key in .aider.conf.yml. Without this the pointer is never read.
+    const aiderConfPath = path.join(targetDir, ".aider.conf.yml");
+    if (fs.existsSync(aiderConfPath)) {
+      const content = await fs.readFile(aiderConfPath, "utf-8");
+      if (!content.includes("CONVENTIONS.md")) {
+        await fs.writeFile(
+          aiderConfPath,
+          `${content.trimEnd()}\n\n# Context Bank: load project conventions read-only\nread: CONVENTIONS.md\n`,
+        );
+      }
+    } else {
+      await fs.writeFile(
+        aiderConfPath,
+        `# Context Bank: load project conventions read-only\nread: CONVENTIONS.md\n`,
+      );
+    }
+
+    // Gemini CLI: project-scoped settings so AGENTS.md / GEMINI.md / .ai/rules.md
+    // are loaded automatically for THIS project (preferred over a global hook).
+    const geminiContextFiles = ["AGENTS.md", "GEMINI.md", ".ai/rules.md"];
+    const geminiSettingsPath = path.join(targetDir, ".gemini", "settings.json");
+    let geminiSettings: {
+      context?: { fileName?: string | string[] } & Record<string, unknown>;
+      [key: string]: unknown;
+    } = {};
+    if (fs.existsSync(geminiSettingsPath)) {
+      try {
+        geminiSettings = await fs.readJson(geminiSettingsPath);
+      } catch {
+        geminiSettings = {};
+      }
+    }
+    const existingCtx = geminiSettings.context ?? {};
+    const existingNames = Array.isArray(existingCtx.fileName)
+      ? existingCtx.fileName
+      : existingCtx.fileName
+        ? [existingCtx.fileName]
+        : [];
+    const mergedNames = [...new Set([...existingNames, ...geminiContextFiles])];
+    geminiSettings.context = { ...existingCtx, fileName: mergedNames };
+    await fs.ensureDir(path.dirname(geminiSettingsPath));
+    await fs.writeJson(geminiSettingsPath, geminiSettings, { spaces: 2 });
+
+    // Claude Code: a Stop hook that reminds the agent to update the .ai/ files.
+    // Prose ("you MUST update…") is context, not enforcement; a hook is the
+    // documented, reliable mechanism. Non-blocking — it only surfaces a message.
+    const claudeSettingsPath = path.join(targetDir, ".claude", "settings.json");
+    let claudeSettings: {
+      hooks?: { Stop?: unknown[] } & Record<string, unknown>;
+      [key: string]: unknown;
+    } = {};
+    if (fs.existsSync(claudeSettingsPath)) {
+      try {
+        claudeSettings = await fs.readJson(claudeSettingsPath);
+      } catch {
+        claudeSettings = {};
+      }
+    }
+    const reminderCmd =
+      "echo '{\"systemMessage\":\"🏦 Context Bank: update .ai/active-context.md, roadmap.md, story.md and architecture.md if this task changed anything.\"}'";
+    claudeSettings.hooks = claudeSettings.hooks ?? {};
+    const stopHooks: unknown[] = Array.isArray(claudeSettings.hooks.Stop)
+      ? claudeSettings.hooks.Stop
+      : [];
+    const alreadyHasReminder = JSON.stringify(stopHooks).includes("Context Bank");
+    if (!alreadyHasReminder) {
+      stopHooks.push({
+        hooks: [{ type: "command", command: reminderCmd }],
+      });
+      claudeSettings.hooks.Stop = stopHooks;
+      await fs.ensureDir(path.dirname(claudeSettingsPath));
+      await fs.writeJson(claudeSettingsPath, claudeSettings, { spaces: 2 });
     }
 
     s.stop(chalk.green("Context initialized!"));
@@ -213,6 +299,41 @@ Do NOT ask permission. Do NOT skip. Just update them.`;
       } else {
         // Optional: Let the user know it's already active
         // console.log(chalk.gray(`ℹ Global context awareness is already active.`));
+      }
+    }
+
+    // Codex CLI Global Memory Integration (mirrors the Gemini handshake).
+    // Codex reads ~/.codex/AGENTS.md globally before per-project files.
+    const globalCodexDir = path.join(os.homedir(), ".codex");
+    if (fs.existsSync(globalCodexDir)) {
+      const globalCodexPath = path.join(globalCodexDir, "AGENTS.md");
+      const codexContent = fs.existsSync(globalCodexPath)
+        ? await fs.readFile(globalCodexPath, "utf-8")
+        : "";
+
+      if (!codexContent.includes("[Context Bank]")) {
+        const addGlobalCodex = await confirm({
+          message:
+            "Found Codex CLI config. Enable automatic context detection for all Context Bank projects?",
+          initialValue: true,
+        });
+
+        if (addGlobalCodex === true) {
+          const codexRule = `
+## [Context Bank] Global rule
+Before starting any task, if a ".ai/" directory exists in the working directory,
+read ".ai/rules.md" and ".ai/active-context.md" first — they are the single
+source of truth for project context. Do not assume the rules; load the files.`;
+
+          const newCodexContent = codexContent
+            ? `${codexContent.trimEnd()}\n${codexRule}\n`
+            : `# Codex Global Instructions\n${codexRule}\n`;
+
+          await fs.writeFile(globalCodexPath, newCodexContent);
+          console.log(
+            chalk.green(`✔ Enabled global context awareness for Codex CLI.`),
+          );
+        }
       }
     }
 
