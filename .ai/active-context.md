@@ -3,10 +3,7 @@
 Current work only. Keep this file under ~80 lines. Older notes belong in `.ai/archive/` or git, not here.
 
 ## Current Focus
-- v2 implemented: init / doctor / compact / migrate, templates, tests (12 passing).
-- Dogfood: this repo migrated. peykfinans is next (`migrate --compact`).
-- Not published to npm yet.
+- 2.0.1: drop the stale "not on npm yet" README note. User publishes.
 
 ## Next Steps
-- Compact peykfinans
-- Review, then decide on npm publish
+- Compact remaining personal banks (motoatolye2-web, motoatolye-web, coditor-platform)

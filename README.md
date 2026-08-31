@@ -5,12 +5,7 @@
 
 Works with anything that reads **`AGENTS.md`**: Claude Code, Grok, Codex, Cursor, Copilot, OpenCode, Gemini CLI.
 
-> **v2.0.0 is not on npm yet.** `npx context-bank` still installs **1.1.1**, which has no `migrate` / `doctor` / `compact`. Until publish, run the local CLI:
->
-> ```bash
-> cd /path/to/context-bank
-> ./node_modules/.bin/tsx src/index.ts <command> [dir]
-> ```
+Latest on npm: **2.0.1**.
 
 ## Why
 
