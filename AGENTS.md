@@ -1,12 +1,11 @@
 # AI Agent Instructions
 
-This project uses **Context Bank**. The single source of truth for tech stack, coding standards, and architecture is **`.ai/rules.md`**. Before starting any task, also read **`.ai/active-context.md`** for the current state.
+This project uses **Context Bank**. Canonical files:
 
-`AGENTS.md` is the cross-tool standard read by Codex, Cursor, GitHub Copilot, Windsurf, Jules, Zed and other agents. Tool-specific files (CLAUDE.md, GEMINI.md, …) point back here or to `.ai/rules.md`.
+- `.ai/rules.md` — stack and conventions. Always read.
+- `.ai/active-context.md` — current work only. Read when resuming; keep under ~80 lines.
+- `.ai/roadmap.md` — open work. Read when planning.
+- `.ai/architecture.md` — current shape, not a changelog. Read when structure matters.
+- `.ai/story.md` — rare decisions. Do not preload. Search when you need a past decision.
 
-MANDATORY: After EVERY task, you MUST update these .ai/ files:
-1. active-context.md — Current state, recent changes, next steps.
-2. roadmap.md — Mark completed features [x], add planned ones.
-3. story.md — Append dated entry for milestones/decisions.
-4. architecture.md — Update on structural/design changes.
-Do NOT ask permission. Do NOT skip. Just update them.
+Do not touch every context file on each change. Update `active-context.md` when the current focus changed. Append `story.md` only for a decision a future agent cannot recover from git. Keep `rules.md` small.

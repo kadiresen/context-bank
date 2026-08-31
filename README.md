@@ -1,126 +1,66 @@
 <!-- AI-CONTEXT: .ai/rules.md -->
-# 🏦 Context Bank
+# Context Bank
 
-<div align="center">
+**The `git init` for AI context.** Git-committed, tool-agnostic project memory. Retrieval-first.
 
-![npm version](https://img.shields.io/npm/v/context-bank?style=flat-square&color=007acc)
-![license](https://img.shields.io/npm/l/context-bank?style=flat-square&color=green)
-![downloads](https://img.shields.io/npm/dt/context-bank?style=flat-square)
+Works with anything that reads **`AGENTS.md`**: Claude Code, Grok, Codex, Cursor, Copilot, OpenCode, Gemini CLI.
 
-**The `git init` for AI Context.**
-<br/>
-Standardize, persist, and evolve your project's AI context with a single command.
-<br/>
-Works with **Cursor**, **Windsurf**, **GitHub Copilot**, **Gemini CLI**, **Claude Code**, **Codex CLI**, **OpenCode**, and **Aider** — built on the cross-tool **`AGENTS.md`** standard.
+> **v2.0.0 is not on npm yet.** `npx context-bank` still installs **1.1.1**, which has no `migrate` / `doctor` / `compact`. Until publish, run the local CLI:
+>
+> ```bash
+> cd /path/to/context-bank
+> ./node_modules/.bin/tsx src/index.ts <command> [dir]
+> ```
 
-</div>
+## Why
 
----
+Native agent memory is siloed (Grok's `~/.grok/memory/`, Claude's session memory). Switching tools drops it. Context Bank keeps the project's brain in the repo.
 
-## ⚡ The Problem
-Every time you start a new chat with an AI Code Editor, you face the same friction:
-*   ❌ **Amnesia:** "Wait, are we using Tailwind or CSS Modules? I forgot."
-*   ❌ **Token Waste:** Manually pasting huge documentation files burns your quota.
-*   ❌ **Inconsistency:** Cursor follows one rule, while Copilot suggests something else.
+v1 told agents to rewrite four markdown files after every task. That inverted the original "token saver" claim: live banks grew to hundreds of thousands of tokens. **v2 inverts the contract.**
 
-## 🚀 The Solution
-**Context Bank** creates a standardized, **self-evolving brain** for your project.
+| File | v2 role |
+|---|---|
+| `.ai/rules.md` | Always read. Stack and conventions. Keep small. |
+| `.ai/active-context.md` | Current work only (~80 lines). |
+| `.ai/roadmap.md` | Open work. |
+| `.ai/architecture.md` | Current shape, not a changelog. Not auto-summarized. |
+| `.ai/story.md` | Rare decisions. **Do not preload.** Search it. |
 
-It generates a structured `.ai` directory that acts as a **Single Source of Truth (SSOT)** for all your AI tools.
-
-## 📦 Installation & Usage
-
-### Prerequisites
-You need **Node.js 18+** installed on your machine.
-*(Most developers already have this. If not, [download it here](https://nodejs.org/).)*
-
-### Quick Start
-Go to your project root (any language: Python, Go, C#, Node, etc.) and run:
+## New project
 
 ```bash
 npx context-bank init
 ```
 
-That's it! 🚀
+Default writes `.ai/` + `AGENTS.md` + a thin `CLAUDE.md` (`@AGENTS.md`). Cursor/Windsurf/Copilot/Aider/Gemini pointer files are opt-in:
 
-## ✨ Key Features
-
-### 🧠 1. Self-Evolving Rules
-Instead of static `.txt` files, Context Bank sets up a living **`rules.md`**.
-*   **Dynamic Learning:** The AI is instructed to *update its own rules* when you state a preference.
-*   **Example:** You tell the AI *"I prefer arrow functions"*. The AI updates `.ai/rules.md`. Next time, it remembers.
-
-### 💾 2. Smart Memory (Token Saver)
-Stop feeding the AI your entire chat history. Context Bank uses "State Management":
-*   **`active-context.md` (Short-term):** Tracks the *current* task. (e.g., "Fixing the login bug").
-*   **`roadmap.md` (Mid-term):** Planned, in-progress, and completed features.
-*   **`architecture.md` (Structural):** Directory layout, data flow, and key design decisions.
-*   **`story.md` (Long-term):** Logs major milestones and architectural decisions.
-*   **The Benefit:** You can start a fresh chat, point the AI to `active-context.md`, and resume work instantly without reading 10k tokens of history.
-
-### 🔌 3. Universal Tool Support
-One brain, multiple interfaces. The `init` command automatically configures pointers for:
-
-| Tool | Support Type | Integration Method |
-|------|--------------|-------------------|
-| **Cursor** | Native ✅ | `.cursor/rules/` (+ reads `AGENTS.md`) |
-| **Windsurf** | Native ✅ | `.windsurf/rules/` (+ reads `AGENTS.md`) |
-| **GitHub Copilot** | Native ✅ | `.github/copilot-instructions.md` (+ reads `AGENTS.md`) |
-| **Claude Code** | Native ✅ | `CLAUDE.md` (imports `AGENTS.md`) |
-| **Codex CLI** | Native ✅ | `AGENTS.md` |
-| **OpenCode** | Native ✅ | reads `AGENTS.md` (falls back to `CLAUDE.md`) |
-| **Gemini CLI** | Native ✅ | `GEMINI.md` + project `.gemini/settings.json` |
-| **Aider** (CLI) | Native ✅ | `CONVENTIONS.md` (wired via `.aider.conf.yml`) |
-
-> 🌐 **`AGENTS.md` is the cross-tool open standard** ([agents.md](https://agents.md/), governed by the Agentic AI Foundation). Context Bank writes a rich `AGENTS.md` as the canonical instruction file — Codex, Cursor, Copilot, Windsurf, Jules, Zed and others read it natively, and `CLAUDE.md` imports it via `@AGENTS.md`. All of them ultimately point to your `.ai/rules.md`.
-
-#### 🤖 Smart CLI Integration
-Context Bank wires up CLI tools two ways:
-
-**Project-scoped (preferred).** No global state — the config lives in your repo:
-*   **Gemini CLI:** writes `.gemini/settings.json` (`context.fileName`) so `AGENTS.md`, `GEMINI.md`, and `.ai/rules.md` load automatically for this project.
-*   **Aider:** writes `.aider.conf.yml` with `read: CONVENTIONS.md` (Aider does **not** auto-load `CONVENTIONS.md` otherwise).
-
-**Global handshake (opt-in).** For **Gemini CLI** and **Codex CLI**, if a global config is detected, Context Bank asks permission to add a Generic Context Rule to `~/.gemini/GEMINI.md` / `~/.codex/AGENTS.md`. Once enabled, the CLI will **automatically check for `.ai/rules.md`** in ANY folder you work in.
-
-#### 🛠️ For Unsupported Tools
-If your tool isn't listed above, just start your session with this **Magic Prompt**:
-
-> "I am starting a session. Please read **`.ai/rules.md`** for project standards and **`.ai/active-context.md`** for the current state. Update these files if plans change."
-
-## 📂 Generated Structure
-
-When you run the command, your project gets this power-pack:
-
-```text
-my-project/
-├── .ai/
-│   ├── rules.md           # 🧠 The Master Brain (SSOT)
-│   ├── active-context.md  # 📝 Current focus & next steps
-│   ├── roadmap.md         # 🗺️ Planned & completed features
-│   ├── architecture.md    # 🏗️ Structure & design decisions
-│   └── story.md           # 📜 Project history & decisions
-├── AGENTS.md              # 🌐 Cross-tool standard (Codex, Cursor, Copilot, …)
-├── CLAUDE.md              # 🔗 Claude Code (imports AGENTS.md)
-├── GEMINI.md              # 🔗 Pointer for Gemini CLI
-├── CONVENTIONS.md         # 🔗 Pointer for Aider
-├── .cursor/rules/context-bank.mdc      # 🔗 Rules for Cursor
-├── .windsurf/rules/context-bank.md     # 🔗 Rules for Windsurf
-├── .github/copilot-instructions.md     # 🔗 Pointer for Copilot
-├── .gemini/settings.json   # ⚙️ Auto-loads context for Gemini CLI
-├── .aider.conf.yml         # ⚙️ Wires CONVENTIONS.md into Aider
-├── .claude/settings.json   # ⚙️ Stop-hook reminder to update .ai/ files
-└── .gitattributes          # 🔀 Branch-aware merge strategies for .ai/
+```bash
+npx context-bank init --legacy-pointers
 ```
 
-## 🤝 Contributing
-Contributions are welcome! Whether it's a new template or a bug fix.
+`init` never overwrites an existing `.ai/` file or `AGENTS.md`. It is **not** an upgrade path.
 
-1.  Fork the repo
-2.  Create your branch (`git checkout -b feature/amazing-feature`)
-3.  Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4.  Push to the branch (`git push origin feature/amazing-feature`)
-5.  Open a Pull Request
+## Existing v1 banks
 
-## 📄 License
+`init` will not migrate you. Run:
+
+```bash
+context-bank migrate             # rewrite the v1 every-task contract; does not delete bank content
+context-bank migrate --compact   # then archive overflow into .ai/archive/ (copy, not delete)
+```
+
+Then skim `.ai/active-context.md` and `.ai/archive/`. `architecture.md` stays as-is if it is over the size cap; `doctor` will warn.
+
+## Commands
+
+```bash
+context-bank doctor              # size caps, leftover v1 contract, stale markers
+context-bank compact             # archive overflow into .ai/archive/
+context-bank compact --dry-run
+context-bank migrate
+context-bank migrate --compact
+```
+
+## License
+
 MIT © [Kadir Esen](https://github.com/kadiresen)

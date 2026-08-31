@@ -1,5 +1,18 @@
 # Story
 
+## 2026-08-31 - v2 shipped: retrieval-first contract
+- CLI: `init` (default `.ai/` + AGENTS.md + CLAUDE.md; `--legacy-pointers` opt-in), `doctor`, `compact`, `migrate`.
+- Compact archives overflow into `.ai/archive/` and does not overwrite an existing archive file.
+- Vitest 13 passing. peykfinans dogfood: live bank ~1.3MB -> ~4k active-context + archives of the v1 originals.
+- Architecture snapshots are not auto-summarized (doctor warns if over cap).
+- Not published to npm yet.
+
+## 2026-08-31 - v2 kararı: archive değil, protokol tersine çevirme
+- Grok/Claude native AGENTS.md + repo arama + silo memory, context-bank'in "git'te duran araç-agnostik beyin" işini ikame etmiyor. İkame edilen şey 8 pointer dosyası ve "her görevde 4 dosya güncelle" zorunluluğu.
+- Kanıt (kişisel bankalar): motoatolye2-web ~466k token, peykfinans ~328k, motoatolye-web ~236k. `rules.md` hepsinde küçük kalmış; şişen `active-context` + `story`.
+- CLI: tek komut, 355 satır, 2.5 aydır commit yok, test dizini yok, Grok yok. npm ~2k indirme / 9 yıldız — kamu ürünü değil, kişisel işletim sistemi.
+- Karar: v2. Compact/doctor/migrate + retrieval-first sözleşme. Phase 2/3 yok.
+
 ## 2026-06-17: OpenCode support + README completeness (v1.1.1)
 - **OpenCode:** Verified no code change is needed — OpenCode reads project-root `AGENTS.md` (legacy fallback `CLAUDE.md`), both of which `init` already writes. Added it to the README integration table and tagline for visibility.
 - **README polish:** Expanded the "Smart Memory" section to also list `roadmap.md` and `architecture.md` (was only `active-context.md` + `story.md`).

@@ -1,26 +1,23 @@
-# AI CONTEXT: ALWAYS READ THIS FILE FIRST
+# Project Context & Rules
 
-# Project Rules & Conventions
+## Context files
+- `rules.md` is the always-on source of truth. Keep it small. Add a convention when the user states one.
+- `active-context.md` is current work only (aim for under 80 lines). Do not append session novels.
+- `story.md` is rare decisions. Search it; do not preload it.
+- Do not touch every context file on each change.
 
-## General
-- **Language:** TypeScript
-- **Runtime:** Node.js
-- **Package Manager:** PNPM
-- **Style:** Clean, strict typing, functional where appropriate.
+## Project
+CLI to standardise git-committed AI context. TypeScript, Node, pnpm.
 
-## CLI Development
-- Use `commander` for command definitions.
-- Use `@clack/prompts` for interactive user input.
-- Ensure all commands have error handling.
-- Keep CLI output concise and user-friendly.
+## CLI
+- `commander` for commands, `@clack/prompts` for interactive input.
+- Keep CLI output concise.
+- Logic lives in `src/lib/` so commands stay thin and tests hit real code.
 
-## File Structure
-- `src/`: Source code
-  - `commands/`: Individual command logic
-  - `utils/`: Helper functions
-  - `templates/`: Default templates for the context bank
-- `templates/`: (Root level) Raw template files for the bank
+## Tests
+- Vitest in `tests/`. Run with `pnpm test`.
+- New command behavior needs a failing test first.
 
-## AI Context Strategy (Dogfooding)
-- Maintain this `.ai` folder to reflect the latest project state.
-- Update `roadmap.md` as features are completed.
+## Git
+- Conventional Commits.
+- Do not commit unless asked.

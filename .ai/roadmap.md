@@ -1,26 +1,18 @@
 # Roadmap
 
-## Phase 1: Templating and Init Command
-- [x] Project Setup (package.json, tsconfig)
-- [x] Linting and Formatting setup (ESLint v10, Prettier)
-- [x] Dogfooding (Self-implementation of .ai folder)
-- [x] Create basic template files (`.ai/rules.md`, `.cursorrules`, etc.) in `templates/`
-- [x] Implement `init` command using Commander and Clack
-- [x] File system operations (copying templates)
+Open work. Move long completed lists to `.ai/archive/` so this file stays skimmable.
 
-## Phase 1.5: 2026 Convention Modernization (v1.1.0)
-- [x] Fix Cursor rule (`alwaysApply: true`)
-- [x] Wire Aider via generated `.aider.conf.yml`
-- [x] Make AGENTS.md the canonical cross-tool file; `CLAUDE.md` imports it
-- [x] Project-scoped Gemini `.gemini/settings.json`
-- [x] Claude Stop-hook reminder via `.claude/settings.json`
-- [x] Global `~/.codex/AGENTS.md` handshake (Gemini parity)
-- [x] Update README integration table + structure tree
-- [x] Document OpenCode support (AGENTS.md-native) in README (v1.1.1)
+## Upcoming
+- [ ] Publish 2.0.0 to npm (after review)
+- [ ] Compact remaining personal banks (motoatolye2-web, motoatolye-web, coditor-platform)
 
-## Phase 2: Advanced Configuration
-- [ ] Dynamic template selection (React, Node, Python, etc.)
-- [ ] Config file support (`context-bank.json`)
+## Not now
+- Language/framework template picker
+- `context-bank.json`
+- Remote template registry
 
-## Phase 3: Registry/Remote Bank
-- [ ] Fetching templates from a remote repository
+## Completed
+- [x] v2 contract, doctor, compact, migrate (2026-08-31)
+- [x] Default init without pointer forest (`--legacy-pointers` opt-in)
+- [x] Vitest: init / doctor / compact / migrate
+- [x] v1.1.1 init + AGENTS.md-canonical pointer forest (2026-06-17)

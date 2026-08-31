@@ -1,5 +1,0 @@
-# Context Bank: branch-aware merge strategies
-# active-context.md is branch-specific — on merge, target branch wins (no conflict)
-.ai/active-context.md merge=ours
-# story.md entries are additive — on merge, combine both sides (no conflict)
-.ai/story.md merge=union
