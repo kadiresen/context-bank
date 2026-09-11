@@ -5,7 +5,7 @@
 - Compact archives overflow into `.ai/archive/` and does not overwrite an existing archive file.
 - Vitest 13 passing. peykfinans dogfood: live bank ~1.3MB -> ~4k active-context + archives of the v1 originals.
 - Architecture snapshots are not auto-summarized (doctor warns if over cap).
-- Not published to npm yet.
+- Published to npm as v2.0.1 on 2026-08-31.
 
 ## 2026-08-31 - v2 kararı: archive değil, protokol tersine çevirme
 - Grok/Claude native AGENTS.md + repo arama + silo memory, context-bank'in "git'te duran araç-agnostik beyin" işini ikame etmiyor. İkame edilen şey 8 pointer dosyası ve "her görevde 4 dosya güncelle" zorunluluğu.

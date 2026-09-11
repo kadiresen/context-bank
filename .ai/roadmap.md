@@ -3,7 +3,6 @@
 Open work. Move long completed lists to `.ai/archive/` so this file stays skimmable.
 
 ## Upcoming
-- [ ] Publish 2.0.0 to npm (after review)
 - [ ] Compact remaining personal banks (motoatolye2-web, motoatolye-web, coditor-platform)
 
 ## Not now
@@ -12,6 +11,7 @@ Open work. Move long completed lists to `.ai/archive/` so this file stays skimma
 - Remote template registry
 
 ## Completed
+- [x] Publish v2.0.1 to npm (2026-08-31)
 - [x] v2 contract, doctor, compact, migrate (2026-08-31)
 - [x] Default init without pointer forest (`--legacy-pointers` opt-in)
 - [x] Vitest: init / doctor / compact / migrate
