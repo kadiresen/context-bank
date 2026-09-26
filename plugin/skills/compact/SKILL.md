@@ -2,7 +2,6 @@
 name: compact
 description: Shrink an over-cap Context Bank by archiving overflow into .ai/archive/ (copied, never deleted).
 disable-model-invocation: true
-allowed-tools: Bash(npx -y context-bank@2.1.0 compact *)
 ---
 
 1. Run `npx -y context-bank@2.1.0 compact "$CLAUDE_PROJECT_DIR" --dry-run` and show the user which files would change and what would be archived.

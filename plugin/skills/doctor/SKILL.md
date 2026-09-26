@@ -2,7 +2,6 @@
 name: doctor
 description: Check this project's Context Bank for over-cap files, leftover v1 contract text, and stale markers.
 disable-model-invocation: true
-allowed-tools: Bash(npx -y context-bank@2.1.0 doctor *)
 ---
 
 Run `npx -y context-bank@2.1.0 doctor "$CLAUDE_PROJECT_DIR"` and report the result in a few lines.
