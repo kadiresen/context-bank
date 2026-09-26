@@ -38,7 +38,7 @@ Working plan to make Context Bank discoverable and adopted. Written 2026-09-26 f
 - [x] Validate: `claude plugin validate --strict` (plugin and marketplace pass) and the pre-submission checklist.
 - [ ] Submit to Anthropic's plugin directory via https://claude.ai/directory/manage (needs a paid claude.ai plan). Note: acceptance into `claude-plugins-official` is reportedly partner-leaning; not guaranteed. Docs: https://code.claude.com/docs/en/plugins/publish.md
 - [x] Make the same SKILL.md work under the Agent Skills standard (agentskills.io; about 40 products incl. Codex, Cursor, Gemini CLI, OpenCode, goose) and document it in the README.
-- [ ] Consider `migrate` support from the Cline Memory Bank layout (big adoption lever for the target audience).
+- [x] `migrate` support from the Cline Memory Bank layout (auto-detected; ships in v2.1.0) (big adoption lever for the target audience).
 
 ## Workstream 3: Listings
 - [ ] PRs to awesome lists: awesome-claude-code, Claude plugin/marketplace lists, Agent Skills lists, context-engineering lists.

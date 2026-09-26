@@ -8,6 +8,7 @@ import {
   V2_RULES_PROTOCOL,
   isLegacyContract,
 } from "./contract.js";
+import { CLINE_ARCHIVE, hasClineBank, importClineBank } from "./cline.js";
 import { compactBank } from "./compact.js";
 import { BANK_FILES, aiPath, agentsPath, readIfExists } from "./scan.js";
 
@@ -75,13 +76,25 @@ function stripContextBankGitattributes(text: string): string {
 export async function migrateBank(
   root: string,
   options: MigrateOptions = {},
-): Promise<{ changed: string[] }> {
+): Promise<{ changed: string[]; notes: string[] }> {
   const changed: string[] = [];
+  const notes: string[] = [];
 
   const write = async (rel: string, body: string) => {
     await fs.writeFile(path.join(root, rel), body.endsWith("\n") ? body : `${body}\n`);
     changed.push(rel);
   };
+
+  if (
+    (await hasClineBank(root)) &&
+    !(await fs.pathExists(path.join(root, CLINE_ARCHIVE)))
+  ) {
+    const cline = await importClineBank(root, {
+      date: options.date ?? new Date().toISOString().split("T")[0],
+    });
+    changed.push(...cline.changed);
+    notes.push(...cline.notes);
+  }
 
   const agents = await readIfExists(agentsPath(root));
   if (agents === null || isLegacyContract(agents) || agents.includes("Context Bank")) {
@@ -132,5 +145,5 @@ export async function migrateBank(
     changed.push(...compact.changed);
   }
 
-  return { changed: [...new Set(changed)] };
+  return { changed: [...new Set(changed)], notes };
 }

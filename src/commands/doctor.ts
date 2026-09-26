@@ -24,7 +24,7 @@ export async function doctorCommand(dir?: string): Promise<void> {
 
   if (!report.ok) {
     console.log(
-      chalk.red("\nRun `context-bank migrate` to switch the v1 contract to v2."),
+      chalk.red("\nRun `context-bank migrate` to switch to the v2 contract."),
     );
     process.exitCode = 1;
   }

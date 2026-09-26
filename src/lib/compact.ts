@@ -57,7 +57,7 @@ function takeBudget(lines: string[], maxLines: number, maxChars: number): string
 }
 
 function compactActiveContext(content: string, archiveRel: string): string {
-  const focus = extractSection(content, /current focus/i);
+  const focus = extractSection(content, /current (work )?focus/i);
   const next = extractSection(content, /next steps|^##\s+next$/i);
   const parts = ["# Active Context", "", V2_ACTIVE_BANNER.trim(), ""];
 

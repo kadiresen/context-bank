@@ -1,4 +1,5 @@
 import path from "node:path";
+import { CLINE_DIR, findClineContracts, hasClineBank } from "./cline.js";
 import { CAPS, hasStaleUncommittedMarker, isLegacyContract } from "./contract.js";
 import { BANK_FILES, aiPath, agentsPath, readIfExists } from "./scan.js";
 
@@ -75,6 +76,32 @@ export async function diagnose(root: string): Promise<Report> {
         file,
       });
     }
+  }
+
+  if (await hasClineBank(root)) {
+    findings.push(
+      rules === null
+        ? {
+            code: "cline-bank",
+            severity: "warn",
+            message: "Cline Memory Bank found in memory-bank/. Run `context-bank migrate` to convert it.",
+            file: path.join(root, CLINE_DIR),
+          }
+        : {
+            code: "cline-leftover",
+            severity: "warn",
+            message: "memory-bank/ is still here next to .ai/; delete it after review so Cline stops loading it",
+            file: path.join(root, CLINE_DIR),
+          },
+    );
+  }
+  for (const { rel } of await findClineContracts(root)) {
+    findings.push({
+      code: "cline-contract",
+      severity: "warn",
+      message: `${rel} still tells Cline to read every memory bank file on every task`,
+      file: path.join(root, rel),
+    });
   }
 
   return {

@@ -93,6 +93,23 @@ context-bank migrate --compact   # then archive overflow into .ai/archive/ (copy
 
 Then skim `.ai/active-context.md` and `.ai/archive/`. `architecture.md` stays as-is if it is over the size cap; `doctor` will warn.
 
+## Coming from Cline Memory Bank
+
+`migrate` detects `memory-bank/` and converts it:
+
+```bash
+npx context-bank migrate --compact
+```
+
+| Cline file | Goes to |
+|---|---|
+| `techContext.md` | `.ai/rules.md` (always read, kept small) |
+| `projectbrief.md`, `productContext.md`, `systemPatterns.md` | `.ai/architecture.md` (read when structure matters) |
+| `activeContext.md` | `.ai/active-context.md` |
+| `progress.md` | `.ai/roadmap.md` |
+
+The whole `memory-bank/` folder, extra docs included, is copied to `.ai/archive/cline-memory-bank/`; nothing is deleted and existing `.ai/` files are never overwritten. A dedicated `.clinerules/memory-bank.md` is backed up and replaced with a short pointer to `AGENTS.md`, so Cline stops reading every file on every task. After you review `.ai/`, delete `memory-bank/`; `doctor` reminds you until you do.
+
 ## Commands
 
 ```bash
