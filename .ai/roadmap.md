@@ -3,6 +3,7 @@
 Open work. Move long completed lists to `.ai/archive/` so this file stays skimmable.
 
 ## Upcoming
+- [ ] Growth plan (`docs/growth-plan.md`): quick wins, Claude Code plugin + Agent Skill, listings, launch
 - [ ] Compact remaining personal banks (motoatolye2-web, motoatolye-web, coditor-platform)
 
 ## Not now
