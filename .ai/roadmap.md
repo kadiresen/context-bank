@@ -3,7 +3,7 @@
 Open work. Move long completed lists to `.ai/archive/` so this file stays skimmable.
 
 ## Upcoming
-- [ ] Growth plan (`docs/growth-plan.md`): quick wins, Claude Code plugin + Agent Skill, listings, launch
+- [ ] Growth plan launch (Workstream 4): drafts in `docs/launch/`, user publishes
 - [ ] Compact remaining personal banks (motoatolye2-web, motoatolye-web, coditor-platform)
 
 ## Not now
@@ -12,6 +12,9 @@ Open work. Move long completed lists to `.ai/archive/` so this file stays skimma
 - Remote template registry
 
 ## Completed
+- [x] Growth Workstreams 1-3: README/demo/numbers, plugin + Agent Skill, listing PRs (2026-09-26)
+- [x] v2.1.0: Cline Memory Bank migrate (2026-09-26)
+- [x] v2.0.2: compact story fixes, Claude Code plugin (2026-09-26)
 - [x] Publish v2.0.1 to npm (2026-08-31)
 - [x] v2 contract, doctor, compact, migrate (2026-08-31)
 - [x] Default init without pointer forest (`--legacy-pointers` opt-in)
