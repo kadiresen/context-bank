@@ -47,9 +47,9 @@ Manual (web form, must be filed by a human):
 - [ ] hesreallyhim/awesome-claude-code (54.6k): issue form `recommend-resource.yml`, category "Memory & Context Persistence". No PRs, no `gh`. One submission at a time.
 
 PRs (good odds):
-- [ ] ai-for-developers/awesome-ai-coding-tools (2.1k, very responsive): README "Developer Productivity Tools", append at end, en dash separator.
-- [ ] yzfly/awesome-context-engineering (149, active): "Tools & Projects > Memory & Compression"; entry in BOTH README.md and README_CN.md.
-- [ ] ccplugins/awesome-claude-code-plugins (952, bursty): "External Marketplaces" table row with install commands.
+- [x] (PR #782, 2026-09-26) ai-for-developers/awesome-ai-coding-tools (2.1k, very responsive): README "Developer Productivity Tools", append at end, en dash separator.
+- [x] (PR #65, 2026-09-26) yzfly/awesome-context-engineering (149, active): "Tools & Projects > Memory & Compression"; entry in BOTH README.md and README_CN.md.
+- [x] (PR #545, 2026-09-26) ccplugins/awesome-claude-code-plugins (952, bursty): "External Marketplaces" table row with install commands.
 
 Automatic indexers (no action; check pickup in ~1 week):
 - [ ] awesomeclaudeplugins.com (crawls `.claude-plugin/marketplace.json`), claudemarketplaces.com, claude-plugins.dev, skillsmp.com, buildwithclaude.com.
