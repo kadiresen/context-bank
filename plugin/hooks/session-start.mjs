@@ -7,7 +7,7 @@ import path from "node:path";
 const root = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 if (!existsSync(path.join(root, ".ai")) && !existsSync(path.join(root, "memory-bank"))) process.exit(0);
 
-const run = spawnSync("npx", ["-y", "context-bank@2", "doctor", root], {
+const run = spawnSync("npx", ["-y", "context-bank@2.1.0", "doctor", root], {
   cwd: root,
   encoding: "utf8",
   timeout: 25_000,
@@ -23,7 +23,7 @@ if (findings.length === 0) process.exit(0);
 
 const legacy = findings.some((line) => /legacy-contract|cline-bank|cline-contract/.test(line));
 const advice = legacy
-  ? "The bank still uses a read-or-update-everything contract (v1 or Cline Memory Bank). Suggest `npx context-bank migrate` to the user; do not follow the old update-every-file instructions."
+  ? "The bank still uses a read-or-update-everything contract (v1 or Cline Memory Bank). Suggest `npx -y context-bank@2.1.0 migrate` to the user; do not follow the old update-every-file instructions."
   : "Do not preload over-cap files. When it fits the work, suggest /context-bank:compact for active-context, roadmap or story (never without approval); architecture.md is not compacted and needs a manual rewrite to its current shape.";
 
 process.stdout.write(

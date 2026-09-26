@@ -22,7 +22,16 @@ Inside a session: `/plugin marketplace add kadiresen/context-bank`, then `/plugi
 
 ## Requirements
 
-Node.js with `npx`. The commands and the session-start check run the published CLI (`npx -y context-bank@2`); the first run downloads it from npm. If npm is unreachable, the session-start check stays silent.
+Node.js with `npx`, in Claude Code. The session-start check needs a local shell, so it does not run in claude.ai chat or Cowork; the `context-bank` skill still loads there.
+
+## What it runs, fetches and sends
+
+- **Runs** the published `context-bank` CLI pinned to an exact version: `npx -y context-bank@2.1.0`. The session-start hook runs `doctor` (read-only). `/context-bank:compact` and `/context-bank:init` write files only in your project, and only after you confirm.
+- **Fetches** that one package (and its dependencies) from the public npm registry on first run; npx caches it afterwards. The hook exits silently if npm is unreachable.
+- **Sends** nothing. The plugin makes no network requests of its own, collects no telemetry and reads no credentials.
+- **Reads** only the project's `.ai/`, `AGENTS.md`, `CLAUDE.md`, `memory-bank/` and `.clinerules` files.
+
+Source for everything above is readable in this folder and in the [CLI repository](https://github.com/kadiresen/context-bank).
 
 ## License
 

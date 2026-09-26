@@ -1,7 +1,7 @@
 {
   "name": "context-bank",
   "displayName": "Context Bank",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Keep AI project memory small, in git, and shared across tools. Teaches Claude the retrieval-first .ai/ contract, checks bank health at session start, and adds doctor, compact and init commands.",
   "author": {
     "name": "Kadir Esen",
