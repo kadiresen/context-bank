@@ -41,8 +41,24 @@ Working plan to make Context Bank discoverable and adopted. Written 2026-09-26 f
 - [x] `migrate` support from the Cline Memory Bank layout (auto-detected; ships in v2.1.0) (big adoption lever for the target audience).
 
 ## Workstream 3: Listings
-- [ ] PRs to awesome lists: awesome-claude-code, Claude plugin/marketplace lists, Agent Skills lists, context-engineering lists.
-- [ ] Community plugin marketplaces/directories for Claude Code.
+Researched 2026-09-26 (stars, activity and contribution rules checked live).
+
+Manual (web form, must be filed by a human):
+- [ ] hesreallyhim/awesome-claude-code (54.6k): issue form `recommend-resource.yml`, category "Memory & Context Persistence". No PRs, no `gh`. One submission at a time.
+
+PRs (good odds):
+- [ ] ai-for-developers/awesome-ai-coding-tools (2.1k, very responsive): README "Developer Productivity Tools", append at end, en dash separator.
+- [ ] yzfly/awesome-context-engineering (149, active): "Tools & Projects > Memory & Compression"; entry in BOTH README.md and README_CN.md.
+- [ ] ccplugins/awesome-claude-code-plugins (952, bursty): "External Marketplaces" table row with install commands.
+
+Automatic indexers (no action; check pickup in ~1 week):
+- [ ] awesomeclaudeplugins.com (crawls `.claude-plugin/marketplace.json`), claudemarketplaces.com, claude-plugins.dev, skillsmp.com, buildwithclaude.com.
+
+Later, once the repo has more stars (these reject brand-new or low-usage entries):
+- [ ] VoltAgent/awesome-agent-skills (34.9k): PR titled `Add skill: kadiresen/context-bank`, "Context Engineering", description of 10 words or fewer.
+- [ ] BehiSecc/awesome-claude-skills (10.2k): PR; maintainer merges in batches.
+
+Skipped: inactive or no merges (ComposioHQ, travisvn, heilcheng, Meirtz, composio-community, rohitg00), poor fit (topoteretes, PatrickJS/awesome-cursorrules), awesome-codex-plugins needs a `.codex-plugin/plugin.json` (revisit if we add one).
 
 ## Workstream 4: Launch (one coordinated day, after 1 and 2 ship)
 - [ ] Post-mortem article: "Why my AI memory files bloated to hundreds of thousands of tokens, and how v2 fixed it" (honest numbers, before/after). dev.to or own blog.
