@@ -47,6 +47,21 @@ describe("diagnose", () => {
     ).toBe(true);
   });
 
+  it("tells the user an over-cap architecture.md needs a manual trim", async () => {
+    const root = await tmpDir();
+    await writeAi(root, {
+      "AGENTS.md": V2_AGENTS,
+      ".ai/rules.md": "# rules\n",
+      ".ai/active-context.md": "# now\n",
+      ".ai/architecture.md": "x".repeat(50_000),
+    });
+    const report = await diagnose(root);
+    const finding = report.findings.find(
+      (f) => f.code === "over-cap" && f.file.endsWith("architecture.md"),
+    );
+    expect(finding?.message).toMatch(/not auto-compacted/);
+  });
+
   it("flags a stale uncommitted marker", async () => {
     const root = await tmpDir();
     await writeAi(root, {

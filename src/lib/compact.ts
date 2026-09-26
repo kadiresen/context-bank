@@ -87,34 +87,75 @@ function compactActiveContext(content: string, archiveRel: string): string {
   return parts.join("\n");
 }
 
-function splitStory(content: string): { preamble: string; entries: string[] } {
-  const parts = content.split(/^(?=### )/m);
-  return {
-    preamble: parts[0] ?? "",
-    entries: parts.slice(1),
-  };
+type StoryEntry = { text: string; index: number; date: string | null };
+
+// Entries are ## or ### headings; banks mix both levels and both orders.
+function splitStory(content: string): { preamble: string; entries: StoryEntry[] } {
+  const parts = content.split(/^(?=#{2,3} )/m);
+  const entries = parts.slice(1).map((text, index) => {
+    const heading = text.split("\n")[0];
+    const match = heading.match(/\b(\d{4}-\d{2}(?:-\d{2})?)\b/);
+    return { text, index, date: match ? match[1] : null };
+  });
+  return { preamble: parts[0] ?? "", entries };
+}
+
+// Newest first: by heading date when most entries are dated, else by append order.
+function rankNewestFirst(entries: StoryEntry[]): StoryEntry[] {
+  const dated = entries.filter((e) => e.date !== null).length;
+  const byDate = dated * 2 >= entries.length;
+  return [...entries].sort((a, b) => {
+    if (byDate) {
+      const cmp = (b.date ?? "").localeCompare(a.date ?? "");
+      if (cmp !== 0) return cmp;
+    }
+    return b.index - a.index;
+  });
 }
 
 function compactStory(
   content: string,
   archiveRel: string,
 ): { next: string; archive: string | null } {
+  const cap = CAPS["story.md"];
   const { preamble, entries } = splitStory(content);
-  if (entries.length <= KEEP_STORY_ENTRIES && content.length <= CAPS["story.md"]) {
+  if (entries.length <= KEEP_STORY_ENTRIES && content.length <= cap) {
     return { next: content, archive: null };
   }
+
+  const ranked = rankNewestFirst(entries);
+  const keepFirst = (n: number): StoryEntry[] => {
+    const keep = new Set(ranked.slice(0, n).map((e) => e.index));
+    return entries.filter((e) => keep.has(e.index));
+  };
+  const build = (kept: string[]): string =>
+    `${preamble.trim()}\n\n> ${V2_STORY_BANNER.trim()}\n> Older entries: \`${archiveRel}\`\n\n${kept.join("").trim()}\n`;
+
   let keepCount = Math.min(KEEP_STORY_ENTRIES, entries.length);
-  while (keepCount > 3) {
-    const candidate = entries.slice(-keepCount).join("");
-    if (preamble.length + candidate.length <= CAPS["story.md"]) break;
+  while (keepCount > 1 && build(keepFirst(keepCount).map((e) => e.text)).length > cap) {
     keepCount -= 1;
   }
-  const kept = entries.slice(-keepCount);
-  const archived = entries.slice(0, -keepCount);
-  if (archived.length === 0 && content.length <= CAPS["story.md"]) {
+  const kept = keepFirst(keepCount);
+  const keptIndexes = new Set(kept.map((e) => e.index));
+  const archived = entries.filter((e) => !keptIndexes.has(e.index)).map((e) => e.text);
+  let keptTexts = kept.map((e) => e.text);
+
+  let next = build(keptTexts);
+  if (next.length > cap && kept.length === 1) {
+    // One entry alone is over the cap: keep its head live, archive it in full.
+    const note = `\n\n_(Truncated. Full entry: \`${archiveRel}\`)_\n`;
+    const budget = Math.max(0, cap - build([""]).length - note.length);
+    let head = kept[0].text.slice(0, budget);
+    const lastBreak = head.lastIndexOf("\n");
+    if (lastBreak > 0) head = head.slice(0, lastBreak);
+    keptTexts = [`${head.trimEnd()}${note}`];
+    archived.push(kept[0].text);
+    next = build(keptTexts);
+  }
+
+  if (archived.length === 0 && content.length <= cap) {
     return { next: content, archive: null };
   }
-  const next = `${preamble.trim()}\n\n> ${V2_STORY_BANNER.trim()}\n> Older entries: \`${archiveRel}\`\n\n${kept.join("").trim()}\n`;
   const archive = `# Archived story\n\nMoved from \`.ai/story.md\` so the live file stays searchable-on-demand, not preloaded.\n\n${archived.join("").trim()}\n`;
   return { next, archive };
 }

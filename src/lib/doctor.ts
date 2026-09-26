@@ -68,7 +68,10 @@ export async function diagnose(root: string): Promise<Report> {
       findings.push({
         code: "over-cap",
         severity: "warn",
-        message: `${name} is ${text.length} chars (cap ${cap})`,
+        message:
+          name === "architecture.md"
+            ? `${name} is ${text.length} chars (cap ${cap}); not auto-compacted, trim it by hand to the current shape`
+            : `${name} is ${text.length} chars (cap ${cap})`,
         file,
       });
     }
