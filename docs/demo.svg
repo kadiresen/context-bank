@@ -45,5 +45,5 @@ text{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:
 <text id="l16" class="ok" x="20" y="372" style="animation-name:k16">updated  .ai/story.md</text>
 <text id="l18" class="c" x="20" y="412" style="animation-name:k18"><tspan class="p">$ </tspan>npx context-bank doctor</text>
 <text id="l19" class="good" x="20" y="432" style="animation-name:k19">Bank is healthy.</text>
-<text id="l21" class="note" x="20" y="472" style="animation-name:k21"># always-read context: ~81k tokens -&gt; ~3k tokens (overflow copied to .ai/archive/)</text>
+<text id="l21" class="note" x="20" y="472" style="animation-name:k21"># session-start reads: ~36k tokens -&gt; ~5k tokens (overflow copied to .ai/archive/)</text>
 </svg>

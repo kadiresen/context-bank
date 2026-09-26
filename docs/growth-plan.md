@@ -22,7 +22,7 @@ Working plan to make Context Bank discoverable and adopted. Written 2026-09-26 f
 - [x] Add GitHub topics: claude-code, agents-md, context-engineering, memory-bank, ai-agents, cursor, codex, ai-memory.
 - [x] Sharpen the repo description around the pain/benefit, add homepage (npm page or a docs page).
 - [x] README: demo at the top. Done as animated SVG (`docs/demo.svg`): `doctor` on a real bloated bank, `migrate --compact`, `doctor` healthy. Real CLI output.
-- [x] README: before/after token table from four real banks (~435k to ~2k always-read tokens on the largest).
+- [x] README: before/after token table from four real banks (~241k to ~5k session-start tokens on the largest, same three files on both sides).
 - [x] README: short comparison table vs Cline Memory Bank, plain AGENTS.md/CLAUDE.md, native tool memory.
 - [x] README: npm downloads and version badges. Also sharpened `package.json` description/keywords/homepage (ships with next npm publish).
 

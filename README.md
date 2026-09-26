@@ -20,16 +20,16 @@ Works with anything that reads **`AGENTS.md`**: Claude Code, Codex, Cursor, Copi
 
 ## Real numbers
 
-Four real banks that grew under the old "read everything, update after every task" contract, before and after `context-bank migrate --compact`. Tokens are estimated as characters / 4.
+Four real banks that grew under the old contract ("read rules, active-context and roadmap before every task; update four files after every task"), before and after `context-bank migrate --compact`. Same three files on both sides. Tokens are estimated as characters / 4.
 
-| Project | Loaded every session before | Always-read after (`rules` + `active-context`) | Plus `roadmap` + `architecture` when needed |
+| Project | Read at session start before | Same files after | Whole bank before (incl. story, architecture) |
 |---|---:|---:|---:|
-| Web app A | ~435k tokens | ~2k tokens | ~29k tokens |
-| Web app B | ~227k tokens | ~2k tokens | ~23k tokens |
-| Workflow service | ~81k tokens | ~3k tokens | ~8k tokens |
-| Mobile app | ~58k tokens | ~2k tokens | ~10k tokens |
+| Web app A | ~241k tokens | ~5k tokens | ~435k tokens |
+| Web app B | ~118k tokens | ~6k tokens | ~227k tokens |
+| Workflow service | ~36k tokens | ~5k tokens | ~81k tokens |
+| Mobile app | ~31k tokens | ~4k tokens | ~58k tokens |
 
-Nothing is deleted: overflow is copied into `.ai/archive/`, and `story.md` stays searchable.
+After migrating, only `rules.md` and `active-context.md` (~2-3k tokens) are read every session; `roadmap.md` is read when planning. Nothing is deleted: overflow is copied into `.ai/archive/`, and `story.md` stays searchable.
 
 ## How it compares
 
