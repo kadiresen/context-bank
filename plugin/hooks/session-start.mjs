@@ -1,0 +1,37 @@
+#!/usr/bin/env node
+// SessionStart: run `context-bank doctor` quietly; speak up only when the bank has findings.
+import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import path from "node:path";
+
+const root = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+if (!existsSync(path.join(root, ".ai"))) process.exit(0);
+
+const run = spawnSync("npx", ["-y", "context-bank@2", "doctor", root], {
+  cwd: root,
+  encoding: "utf8",
+  timeout: 25_000,
+  env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: "0" },
+});
+if (run.error || run.stdout == null) process.exit(0);
+
+const findings = run.stdout
+  .split("\n")
+  .map((line) => line.trim())
+  .filter((line) => /^(error|warn)\s+/.test(line));
+if (findings.length === 0) process.exit(0);
+
+const legacy = findings.some((line) => line.includes("legacy-contract"));
+const advice = legacy
+  ? "The bank still uses the v1 every-task update contract. Suggest `npx context-bank migrate` to the user; do not follow the old update-every-file instructions."
+  : "Do not preload over-cap files. When it fits the work, suggest /context-bank:compact for active-context, roadmap or story (never without approval); architecture.md is not compacted and needs a manual rewrite to its current shape.";
+
+process.stdout.write(
+  JSON.stringify({
+    systemMessage: `Context Bank: ${findings.length} finding(s). Run /context-bank:doctor for details.`,
+    hookSpecificOutput: {
+      hookEventName: "SessionStart",
+      additionalContext: `Context Bank doctor findings:\n${findings.join("\n")}\n${advice}`,
+    },
+  }),
+);

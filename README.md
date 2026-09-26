@@ -55,6 +55,19 @@ Nothing is deleted: overflow is copied into `.ai/archive/`, and `story.md` stays
 
 `AGENTS.md` carries the contract, so every tool that reads it gets the same instructions. Claude Code gets a thin `CLAUDE.md` that imports it (`@AGENTS.md`).
 
+## Claude Code plugin
+
+```bash
+claude plugin marketplace add kadiresen/context-bank
+claude plugin install context-bank@context-bank
+```
+
+Adds a `context-bank` skill (which file to read when, when to write, what never to write), a quiet session-start `doctor` check that only speaks up when something is wrong, and `/context-bank:doctor`, `/context-bank:compact`, `/context-bank:init`. Details in [plugin/README.md](plugin/README.md).
+
+## Agent Skills (Codex, Cursor, Gemini CLI, OpenCode, ...)
+
+The skill follows the [Agent Skills](https://agentskills.io) standard and uses only its standard frontmatter fields. To use it outside the plugin, copy [`plugin/skills/context-bank/`](plugin/skills/context-bank/SKILL.md) into your tool's skills directory (for Claude Code without the plugin: `.claude/skills/`).
+
 ## New project
 
 ```bash

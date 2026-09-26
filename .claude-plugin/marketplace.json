@@ -1,0 +1,15 @@
+{
+  "name": "context-bank",
+  "owner": {
+    "name": "Kadir Esen",
+    "url": "https://github.com/kadiresen"
+  },
+  "description": "Context Bank: git-committed, retrieval-first project memory for AI agents.",
+  "plugins": [
+    {
+      "name": "context-bank",
+      "source": "./plugin",
+      "description": "Retrieval-first .ai/ contract as a skill, a quiet session-start health check, and doctor/compact/init commands."
+    }
+  ]
+}

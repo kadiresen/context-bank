@@ -1,0 +1,20 @@
+{
+  "name": "context-bank",
+  "displayName": "Context Bank",
+  "version": "2.0.1",
+  "description": "Keep AI project memory small, in git, and shared across tools. Teaches Claude the retrieval-first .ai/ contract, checks bank health at session start, and adds doctor, compact and init commands.",
+  "author": {
+    "name": "Kadir Esen",
+    "url": "https://github.com/kadiresen"
+  },
+  "homepage": "https://github.com/kadiresen/context-bank#readme",
+  "repository": "https://github.com/kadiresen/context-bank",
+  "license": "MIT",
+  "keywords": [
+    "memory-bank",
+    "context-engineering",
+    "agents-md",
+    "ai-memory",
+    "project-context"
+  ]
+}

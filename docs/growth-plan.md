@@ -27,17 +27,17 @@ Working plan to make Context Bank discoverable and adopted. Written 2026-09-26 f
 - [x] README: npm downloads and version badges. Also sharpened `package.json` description/keywords/homepage (ships with next npm publish).
 
 ## Workstream 2: Claude Code plugin + Agent Skill
-- [ ] Package as a Claude Code plugin in this repo:
+- [x] Package as a Claude Code plugin in this repo (in `plugin/`, so the repo's own CLAUDE.md, src and tests are not shipped; commands are skills, namespaced `/context-bank:doctor|compact|init`):
   - Skill (`skills/context-bank/SKILL.md`): when to read which `.ai/` file, when to update, what never to write.
   - SessionStart hook: run `context-bank doctor` quietly, surface only warnings (over-cap files, leftover v1 contract).
   - Commands: `/cb-doctor`, `/cb-compact` (and maybe `/cb-init`).
   - `.claude-plugin/plugin.json` with full metadata (name, description, author, homepage, repository, version) and README at plugin root.
-- [ ] Add `.claude-plugin/marketplace.json` so users can run:
+- [x] Add `.claude-plugin/marketplace.json` (name `context-bank`, source `./plugin`) so users can run:
   - `claude plugin marketplace add kadiresen/context-bank`
   - `claude plugin install context-bank@<marketplace-name>`
-- [ ] Validate: `claude plugin validate --strict` and the pre-submission checklist.
+- [x] Validate: `claude plugin validate --strict` (plugin and marketplace pass) and the pre-submission checklist.
 - [ ] Submit to Anthropic's plugin directory via https://claude.ai/directory/manage (needs a paid claude.ai plan). Note: acceptance into `claude-plugins-official` is reportedly partner-leaning; not guaranteed. Docs: https://code.claude.com/docs/en/plugins/publish.md
-- [ ] Make the same SKILL.md work under the Agent Skills standard (agentskills.io; about 40 products incl. Codex, Cursor, Gemini CLI, OpenCode, goose) and document it in the README.
+- [x] Make the same SKILL.md work under the Agent Skills standard (agentskills.io; about 40 products incl. Codex, Cursor, Gemini CLI, OpenCode, goose) and document it in the README.
 - [ ] Consider `migrate` support from the Cline Memory Bank layout (big adoption lever for the target audience).
 
 ## Workstream 3: Listings
