@@ -1,6 +1,6 @@
 {
   "name": "context-bank",
-  "version": "2.0.2",
+  "version": "2.1.0",
   "description": "Keep AI project memory small, in git, and shared across tools. Capped files, retrieval-first history, and a doctor that measures bloat.",
   "type": "module",
   "bin": {
