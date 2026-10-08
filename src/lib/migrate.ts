@@ -6,11 +6,15 @@ import {
   V2_CLAUDE_MD,
   V2_ROADMAP_BANNER,
   V2_RULES_PROTOCOL,
+  V3_AGENTS_MD,
+  V3_CLAUDE_MD,
+  V3_RULES_PROTOCOL,
   isLegacyContract,
 } from "./contract.js";
 import { CLINE_ARCHIVE, hasClineBank, importClineBank } from "./cline.js";
 import { compactBank } from "./compact.js";
-import { BANK_FILES, LEGACY_STORY, aiPath, agentsPath, readIfExists } from "./scan.js";
+import { migrateStoryToV3 } from "./migrate-v3.js";
+import { BANK_FILES, aiPath, agentsPath, readIfExists } from "./scan.js";
 
 export type MigrateOptions = {
   compact?: boolean;
@@ -36,14 +40,17 @@ function stripBlockquoteBanner(text: string): string {
 }
 
 function replaceRulesProtocol(text: string): string {
+  if (text.includes(V2_RULES_PROTOCOL.trim())) {
+    return text.replace(V2_RULES_PROTOCOL.trim(), () => V3_RULES_PROTOCOL.trim());
+  }
   if (/## ⚠️ MANDATORY: MEMORY MANAGEMENT PROTOCOL/.test(text)) {
     return text.replace(
-      /## ⚠️ MANDATORY: MEMORY MANAGEMENT PROTOCOL[\s\S]*?(?=\n## )/,
-      `${V2_RULES_PROTOCOL.trim()}\n\n`,
+      /## ⚠️ MANDATORY: MEMORY MANAGEMENT PROTOCOL[\s\S]*?(?=\n## |$)/,
+      `${V3_RULES_PROTOCOL.trim()}\n\n`,
     );
   }
   if (isLegacyContract(text) && !text.includes("## Context files")) {
-    return `${V2_RULES_PROTOCOL.trim()}\n\n${text}`;
+    return `${V3_RULES_PROTOCOL.trim()}\n\n${text}`;
   }
   return text;
 }
@@ -56,6 +63,57 @@ function ensureBanner(text: string, banner: string): string {
   }
   return `${banner.trim()}\n\n${text}`;
 }
+
+function migrateContract(
+  text: string,
+  v2: string,
+  v3: string,
+  hasStoryRef: boolean,
+): { text: string; note?: string } {
+  const crlf = (t: string) => t.replace(/\n/g, "\r\n");
+  const v2Trim = v2.trimEnd();
+  const v3Trim = v3.trimEnd();
+  if (text.includes(v2Trim)) return { text: text.replace(v2Trim, () => v3Trim) };
+  if (text.includes(crlf(v2Trim))) {
+    return { text: text.replace(crlf(v2Trim), () => crlf(v3Trim)) };
+  }
+  if (isLegacyContract(text)) return { text: v3 };
+  if (!hasStoryRef || !text.includes("Context Bank") || !/story\.md/.test(text)) {
+    return { text };
+  }
+  const v2Lines = v2.split("\n");
+  const v3Lines = v3.split("\n");
+  const map = new Map<string, string>();
+  v2Lines.forEach((line, i) => {
+    if (line.includes("story.md") && v3Lines.length === v2Lines.length) {
+      map.set(line, v3Lines[i]!);
+    }
+  });
+  const next = text
+    .split("\n")
+    .map((line) => {
+      const cr = line.endsWith("\r") ? "\r" : "";
+      const bare = cr ? line.slice(0, -1) : line;
+      const to = map.get(bare);
+      return to === undefined ? line : `${to}${cr}`;
+    })
+    .join("\n");
+  if (/story\.md/.test(next)) {
+    return {
+      text: next,
+      note: "AGENTS.md has a customized contract; update its story.md reference to .ai/story/ by hand",
+    };
+  }
+  return { text: next };
+}
+
+const POINTER_FILES = [
+  "GEMINI.md",
+  "CONVENTIONS.md",
+  ".cursor/rules/context-bank.mdc",
+  ".windsurf/rules/context-bank.md",
+  ".github/copilot-instructions.md",
+];
 
 function stripContextBankGitattributes(text: string): string {
   const withoutBlock = text.replace(
@@ -81,7 +139,9 @@ export async function migrateBank(
   const notes: string[] = [];
 
   const write = async (rel: string, body: string) => {
-    await fs.writeFile(path.join(root, rel), body.endsWith("\n") ? body : `${body}\n`);
+    const full = body.endsWith("\n") ? body : `${body}\n`;
+    if ((await readIfExists(path.join(root, rel))) === full) return;
+    await fs.writeFile(path.join(root, rel), full);
     changed.push(rel);
   };
 
@@ -97,24 +157,28 @@ export async function migrateBank(
   }
 
   const agents = await readIfExists(agentsPath(root));
-  if (agents === null || isLegacyContract(agents) || agents.includes("Context Bank")) {
-    await write("AGENTS.md", V2_AGENTS_MD);
+  if (agents === null) {
+    await write("AGENTS.md", V3_AGENTS_MD);
+  } else {
+    const r = migrateContract(agents, V2_AGENTS_MD, V3_AGENTS_MD, true);
+    if (r.note) notes.push(r.note);
+    await write("AGENTS.md", r.text);
   }
 
-  const claudePath = path.join(root, "CLAUDE.md");
-  const claude = await readIfExists(claudePath);
-  if (claude === null || isLegacyContract(claude) || claude.includes("@AGENTS.md")) {
-    await write("CLAUDE.md", V2_CLAUDE_MD);
+  const claude = await readIfExists(path.join(root, "CLAUDE.md"));
+  if (claude === null) {
+    await write("CLAUDE.md", V3_CLAUDE_MD);
+  } else {
+    await write("CLAUDE.md", migrateContract(claude, V2_CLAUDE_MD, V3_CLAUDE_MD, false).text);
   }
 
   const banners: Record<string, string> = {
     "active-context.md": "",
-    [LEGACY_STORY]: "",
     "architecture.md": V2_ARCH_BANNER,
     "roadmap.md": V2_ROADMAP_BANNER,
   };
 
-  for (const name of [...BANK_FILES, LEGACY_STORY]) {
+  for (const name of BANK_FILES) {
     const file = aiPath(root, name);
     let text = await readIfExists(file);
     if (text === null) continue;
@@ -129,6 +193,30 @@ export async function migrateBank(
     if (text !== before) {
       await write(path.join(".ai", name), text);
     }
+  }
+
+  const date = options.date ?? new Date().toISOString().split("T")[0]!;
+  const story = await migrateStoryToV3(root, { date });
+  changed.push(...story.created, ...story.removed);
+  if (story.created.length > 0) {
+    notes.push(
+      `Created ${story.created.length} ${story.created.length === 1 ? "decision" : "decisions"} in .ai/story/ from story.md and archived story files.`,
+    );
+  }
+  const storyDir = path.join(root, ".ai/story");
+  if ((await fs.pathExists(aiPath(root, "rules.md"))) && !(await fs.pathExists(storyDir))) {
+    await fs.ensureDir(storyDir);
+    await fs.writeFile(path.join(storyDir, ".gitkeep"), "");
+    changed.push(".ai/story/.gitkeep");
+  }
+
+  for (const rel of POINTER_FILES) {
+    const text = await readIfExists(path.join(root, rel));
+    if (text === null || !text.includes(".ai/story.md")) continue;
+    const next = text
+      .replace(/(`\.ai\/[^`\n]+`) \u2014 /g, "$1: ")
+      .replace(/\.ai\/story\.md/g, ".ai/story/");
+    await write(rel, next);
   }
 
   const gitattrs = path.join(root, ".gitattributes");

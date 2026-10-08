@@ -12,8 +12,8 @@ export async function migrateCommand(
   if (!options.yes) {
     const cline = await hasClineBank(root);
     const base = cline
-      ? "Convert the Cline Memory Bank (memory-bank/) into .ai/ and write the v2 contract? Originals are copied, not deleted."
-      : "Rewrite the v1 every-task contract to v2 (retrieval-first)?";
+      ? "Convert the Cline Memory Bank (memory-bank/) into .ai/ and write the v3 contract? Originals are copied, not deleted."
+      : "Migrate to Context Bank 3 (retrieval-first contract, one file per decision in .ai/story/)?";
     const ok = await confirm({
       message: options.compact ? `${base} Then compact over-cap files.` : base,
     });
@@ -25,7 +25,7 @@ export async function migrateCommand(
 
   const result = await migrateBank(root, { compact: options.compact === true });
   if (result.changed.length === 0 && result.notes.length === 0) {
-    console.log(chalk.green("Already on v2."));
+    console.log(chalk.green("Already on v3."));
     return;
   }
   for (const file of result.changed) {

@@ -30,7 +30,7 @@ const read = (root: string, rel: string) =>
   fs.readFile(path.join(root, rel), "utf-8");
 
 describe("migrateBank from a Cline Memory Bank", () => {
-  it("maps the six core files into .ai/ and writes the v2 contract", async () => {
+  it("maps the six core files into .ai/ and writes the v3 contract", async () => {
     const root = await tmpDir();
     await writeAi(root, clineBank());
 
@@ -53,8 +53,8 @@ describe("migrateBank from a Cline Memory Bank", () => {
     const roadmap = await read(root, ".ai/roadmap.md");
     expect(roadmap).toContain("- Billing");
 
-    const story = await read(root, ".ai/story.md");
-    expect(story).toContain("### 2026-09-26 - Migrated from Cline Memory Bank");
+    const story = await read(root, ".ai/story/2026-09-26-migrated-from-cline-memory-bank.md");
+    expect(story).toContain("# Migrated from Cline Memory Bank");
 
     const agents = await read(root, "AGENTS.md");
     expect(agents).toContain("Do not preload");
