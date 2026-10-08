@@ -15,14 +15,14 @@ Hi HN, I built Context Bank: a small CLI that keeps AI coding agents' project me
 
 The first version had a bad idea in it. Its instructions told agents to update four memory files after every task, and to read three of them before every task. Agents did exactly that. On my own projects, the files read at session start grew to between ~31k and ~241k tokens (chars/4), mostly session diaries and completed checklists.
 
-v2 inverts the contract:
+v2 inverted the contract, and v3 (out now) finishes the job:
 - only rules.md and active-context.md (~80 lines) are read every session
-- story.md holds rare decisions and is searched, not preloaded
+- decisions live in .ai/story/, one small file each, searched and never preloaded
 - each file has a size cap; `context-bank doctor` measures it
 - `compact` archives overflow to .ai/archive/ (copies, never deletes)
-- `migrate` converts a v1 bank or a Cline Memory Bank
+- `migrate` converts a v1/v2 bank or a Cline Memory Bank
 
-Same three files before/after on those projects: 241k -> 5k, 118k -> 6k, 36k -> 5k, 31k -> 4k tokens.
+Same three files before/after on those projects: 241k -> 5k, 119k -> 5k, 36k -> 5k, 31k -> 4k tokens. Their histories became 66 to 457 decision files.
 
 Why not native tool memory: it is per user and per tool. This lives in the repo, gets reviewed in PRs and is shared by the team.
 

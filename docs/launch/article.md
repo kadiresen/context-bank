@@ -1,9 +1,5 @@
 # My AI memory bank grew to 240k tokens per session. Here is what I got wrong.
 
-*Draft for dev.to / blog. Target: people who keep AI project memory in markdown files (Cline Memory Bank, AGENTS.md, CLAUDE.md, homegrown `.ai/` folders).*
-
----
-
 In December 2025 I shipped a small CLI called [Context Bank](https://github.com/kadiresen/context-bank). The idea was simple and, I still think, right: keep your AI coding agent's project memory in the repo, in plain markdown under `.ai/`, committed to git. Every tool reads it (Claude Code, Codex, Cursor, Copilot, Gemini CLI), every teammate gets it, and it survives switching tools.
 
 The pitch was "save tokens: stop re-explaining your project every session".
@@ -38,7 +34,7 @@ Here is what four of my real projects looked like, measured on copies of the ban
 | Project | Read at session start (rules + active-context + roadmap) | Whole bank |
 |---|---:|---:|
 | Web app A | ~241k tokens | ~435k tokens |
-| Web app B | ~118k tokens | ~227k tokens |
+| Web app B | ~119k tokens | ~229k tokens |
 | Workflow service | ~36k tokens | ~81k tokens |
 | Mobile app | ~31k tokens | ~58k tokens |
 
@@ -64,16 +60,22 @@ Context Bank v2 keeps the files and flips the rules:
 - **Caps, and a tool that measures them.** Each file has a size cap. `context-bank doctor` reports over-cap files, leftover v1 instructions and stale markers.
 - **Clean up without losing anything.** `context-bank compact` moves overflow into `.ai/archive/` (copied, never deleted). `context-bank migrate` rewrites a v1 bank, or converts a Cline Memory Bank, to the new contract.
 
-Same banks, same three files, before and after `migrate --compact`:
+## v3: one file per decision
+
+v2 still had one file that only grew: `story.md`. Even searched instead of preloaded, a single file of hundreds of entries is hard to grep well, and v2's `compact` had to cut old entries into an archive to keep it under its cap.
+
+v3 replaces it with `.ai/story/`: one small file per decision, named by date and title (`2026-06-08-no-i18n-turkish-ui-english-code.md`). An agent lists the folder or greps it and opens only the decision it needs. New decisions are new files; old ones are never edited, so history does not churn in diffs. Each file has its own cap, and `migrate` splits an existing `story.md` (and anything an earlier `compact` archived) into these files without dropping an entry.
+
+Same banks, same three files, before and after `migrate --compact` with 3.0.0:
 
 | Project | Before | After |
 |---|---:|---:|
 | Web app A | ~241k tokens | ~5k tokens |
-| Web app B | ~118k tokens | ~6k tokens |
+| Web app B | ~119k tokens | ~5k tokens |
 | Workflow service | ~36k tokens | ~5k tokens |
 | Mobile app | ~31k tokens | ~4k tokens |
 
-Only `rules.md` and `active-context.md` (~2-3k tokens) are read every session now.
+Only `rules.md` and `active-context.md` (~2-3k tokens) are read every session now. The four banks' histories became 457, 167, 130 and 66 decision files, none of which is loaded until an agent goes looking for it.
 
 ## If you keep AI memory in markdown
 
@@ -88,7 +90,7 @@ Whatever tool you use, these held up for me:
 
 ```bash
 npx context-bank doctor            # measure an existing bank
-npx context-bank migrate --compact # v1 or Cline Memory Bank -> v2
+npx context-bank migrate --compact # v1, v2 or Cline Memory Bank -> v3
 npx context-bank init              # new project
 ```
 
@@ -99,6 +101,6 @@ claude plugin marketplace add kadiresen/context-bank
 claude plugin install context-bank@context-bank
 ```
 
-**Caveats, honestly:** the numbers are my own projects, and characters / 4 is an estimate, not a tokenizer count. `compact` is heuristic: it keeps the newest story entries and the current-focus section, so skim the result. `architecture.md` is never compacted automatically; if it is over its cap, it needs a human (or an agent you supervise) to rewrite it down to the current shape.
+**Caveats, honestly:** the numbers are my own projects, and characters / 4 is an estimate, not a tokenizer count. `compact` is heuristic: it keeps the current-focus and next-steps sections of `active-context.md`, so skim the result. Decision files keep their original wording; entries without a date in their heading need a quick look after `migrate`. `architecture.md` is never compacted automatically; if it is over its cap, it needs a human (or an agent you supervise) to rewrite it down to the current shape.
 
 Source, MIT: https://github.com/kadiresen/context-bank

@@ -22,14 +22,14 @@ Works with anything that reads **`AGENTS.md`**: Claude Code, Codex, Cursor, Copi
 
 ## Real numbers
 
-Four real banks that grew under the old contract ("read rules, active-context and roadmap before every task; update four files after every task"), before and after `context-bank migrate --compact`. Same three files on both sides. Tokens are estimated as characters / 4.
+Four real banks that grew under the old contract ("read rules, active-context and roadmap before every task; update four files after every task"), before and after `context-bank migrate --compact` (3.0.0). Same three files on both sides. Tokens are estimated as characters / 4.
 
-| Project | Read at session start before | Same files after | Whole bank before (incl. story, architecture) |
-|---|---:|---:|---:|
-| Web app A | ~241k tokens | ~5k tokens | ~435k tokens |
-| Web app B | ~118k tokens | ~6k tokens | ~227k tokens |
-| Workflow service | ~36k tokens | ~5k tokens | ~81k tokens |
-| Mobile app | ~31k tokens | ~4k tokens | ~58k tokens |
+| Project | Read at session start before | Same files after | Whole bank before (incl. story, architecture) | Decisions after (one file each) |
+|---|---:|---:|---:|---:|
+| Web app A | ~241k tokens | ~5k tokens | ~435k tokens | 457 |
+| Web app B | ~119k tokens | ~5k tokens | ~229k tokens | 167 |
+| Workflow service | ~36k tokens | ~5k tokens | ~81k tokens | 130 |
+| Mobile app | ~31k tokens | ~4k tokens | ~58k tokens | 66 |
 
 After migrating, only `rules.md` and `active-context.md` (~2-3k tokens) are read every session; `roadmap.md` is read when planning. Nothing is deleted: overflow is copied into `.ai/archive/`, and `.ai/story/` stays searchable.
 
