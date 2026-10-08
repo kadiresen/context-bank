@@ -1,8 +1,15 @@
 {
   "name": "context-bank",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "Keep AI project memory small, in git, and shared across tools. Capped files, retrieval-first history, and a doctor that measures bloat.",
   "type": "module",
+  "types": "./dist/lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/lib/index.d.ts",
+      "import": "./dist/lib/index.js"
+    }
+  },
   "bin": {
     "context-bank": "./dist/index.js"
   },

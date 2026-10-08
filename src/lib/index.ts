@@ -1,0 +1,13 @@
+export { initializeBank } from "./init-bank.js";
+export type { InitOptions } from "./init-bank.js";
+export { diagnose } from "./doctor.js";
+export type { Finding, Report } from "./doctor.js";
+export { migrateBank } from "./migrate.js";
+export type { MigrateOptions } from "./migrate.js";
+export { compactBank } from "./compact.js";
+export type { CompactOptions, CompactResult } from "./compact.js";
+export { bankVersion } from "./version.js";
+export type { BankVersion } from "./version.js";
+export { CAPS } from "./contract.js";
+export { BANK_FILES } from "./scan.js";
+export type { BankFile } from "./scan.js";
