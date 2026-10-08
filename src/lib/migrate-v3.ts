@@ -62,6 +62,8 @@ function stripPreamble(pre: string, kind: "story" | "archive"): string {
   return out.join("\n").trim();
 }
 
+const DATE_TITLE = /^(\d{4}-\d{2}-\d{2})\s*(?:[-:\u2013\u2014]\s*)?(.*)$/;
+const DATED_HEADING = /^#{2,3} (\d{4}-\d{2}-\d{2})/;
 const TEMPLATE_SECTIONS = /^## (project inception|development log)\s*$/i;
 
 function parseSections(content: string): { preamble: string; sections: Section[] } {
@@ -75,8 +77,14 @@ function parseSections(content: string): { preamble: string; sections: Section[]
     } else fenced.push(open);
   }
   const marker = all.some((l, i) => !fenced[i] && l.startsWith("### ")) ? "### " : "## ";
-  const isEntry = (l: string) =>
-    l.startsWith(marker) && !(marker === "## " && TEMPLATE_SECTIONS.test(l));
+  // Entry rule: a `##` or `###` heading whose text starts with a date always starts a new
+  // entry, whatever level the rest of the file uses (real banks mix `###` and `##` entries,
+  // and dates mark entries even when one looks nested inside another). Undated headings
+  // keep the level rule: `### ` if the file has any, else `## `. Template sections stay preamble.
+  const isEntry = (l: string) => {
+    if (DATED_HEADING.test(l)) return true;
+    return l.startsWith(marker) && !(marker === "## " && TEMPLATE_SECTIONS.test(l));
+  };
   const pre: string[] = [];
   const raws: string[][] = [];
   let inPre = true;
@@ -95,9 +103,9 @@ function parseSections(content: string): { preamble: string; sections: Section[]
   }
   const preamble = pre.join("\n");
   const sections = raws.map((lines) => {
-    const heading = lines[0]!.slice(marker.length).trim();
+    const heading = lines[0]!.replace(/^#{2,3} /, "").trim();
     const body = lines.slice(1).join("\n").replace(/^\s*\n|\s+$/g, "");
-    const m = /^(\d{4}-\d{2}-\d{2})\s*(?:[-:\u2013\u2014]\s*)?(.*)$/.exec(heading);
+    const m = DATE_TITLE.exec(heading);
     if (m) return { date: m[1]!, title: m[2]!.trim() || "Decision", body };
     return { date: null, title: heading || "Decision", body };
   });
@@ -128,7 +136,7 @@ async function findPlaceholders(root: string): Promise<string[]> {
 
 /**
  * Splits v2 `.ai/story.md` and `.ai/archive/story-*.md` into one decision file per
- * `### ` section (or `## ` when the file has no `### ` heading). Writes every decision first, verifies, and only then removes sources.
+ * `### ` section (or `## ` when the file has no `### ` heading); dated `##`/`###` headings always start an entry. Writes every decision first, verifies, and only then removes sources.
  */
 export async function migrateStoryToV3(
   root: string,

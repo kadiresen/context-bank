@@ -512,3 +512,54 @@ describe("migrateBank 2 -> 3: fences, archive, caps", () => {
     expect(await fs.readFile(path.join(root, ".ai/archive/context-bank-2026-10-08.md"), "utf-8")).toBe(legacy);
   });
 });
+
+describe("migrateBank 2 -> 3 mixed heading levels", () => {
+  const base = { "AGENTS.md": V2_AGENTS_MD, "CLAUDE.md": V2_CLAUDE_MD, ".ai/rules.md": "# r\n" };
+
+  it("splits dated entries at both ## and ### levels", async () => {
+    const story = [
+      "# Story", "",
+      "### 2026-09-25 - First", "body first", "",
+      "### 2026-09-26: Second", "body second", "",
+      "## 2026-09-27 - Native loop design (Plan 2C)", "body third", "",
+      "## 2026-09-28 - Fourth", "body fourth", "",
+      "## 2026-09-29 - Fifth", "body fifth", "",
+    ].join("\n");
+    const root = await tmpDir();
+    await writeAi(root, { ...base, ".ai/story.md": story });
+    await migrateBank(root, { date: "2026-10-08" });
+    const files = await readStory(root);
+    expect(Object.keys(files).sort()).toEqual([
+      "2026-09-25-first.md",
+      "2026-09-26-second.md",
+      "2026-09-27-native-loop-design-plan-2c.md",
+      "2026-09-28-fourth.md",
+      "2026-09-29-fifth.md",
+    ]);
+    expect(Object.keys(files).some((f) => f.includes("part"))).toBe(false);
+    expect(files["2026-09-27-native-loop-design-plan-2c.md"]).toContain("Date: 2026-09-27");
+    const all = Object.values(files).join("\n");
+    for (const l of ["body first", "body second", "body third", "body fourth", "body fifth"]) expect(all).toContain(l);
+  });
+
+  it("keeps an undated ## section inside the previous entry", async () => {
+    const story = ["# Story", "", "### 2026-09-25 - First", "body first", "", "## Notes", "note line", "", "### 2026-09-26 - Second", "body second", ""].join("\n");
+    const root = await tmpDir();
+    await writeAi(root, { ...base, ".ai/story.md": story });
+    await migrateBank(root, { date: "2026-10-08" });
+    const files = await readStory(root);
+    expect(Object.keys(files).sort()).toEqual(["2026-09-25-first.md", "2026-09-26-second.md"]);
+    expect(files["2026-09-25-first.md"]).toContain("## Notes");
+    expect(files["2026-09-25-first.md"]).toContain("note line");
+  });
+
+  it("ignores a dated heading inside a code fence", async () => {
+    const story = ["# Story", "", "### 2026-09-25 - First", "```md", "## 2026-09-30 - Not an entry", "```", "after fence", ""].join("\n");
+    const root = await tmpDir();
+    await writeAi(root, { ...base, ".ai/story.md": story });
+    await migrateBank(root, { date: "2026-10-08" });
+    const files = await readStory(root);
+    expect(Object.keys(files)).toEqual(["2026-09-25-first.md"]);
+    expect(files["2026-09-25-first.md"]).toContain("## 2026-09-30 - Not an entry");
+  });
+});
