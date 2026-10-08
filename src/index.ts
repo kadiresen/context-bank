@@ -19,7 +19,7 @@ program
 
 program
   .command("init")
-  .description("Create a v2 context bank in the current directory")
+  .description("Create a v3 context bank in the current directory")
   .option("-y, --yes", "Skip confirmation prompt")
   .option(
     "--legacy-pointers",
@@ -47,7 +47,7 @@ program
 
 program
   .command("migrate")
-  .description("Upgrade a v1 bank or a Cline Memory Bank to the v2 retrieval-first contract")
+  .description("Upgrade a v1 or v2 bank, or a Cline Memory Bank, to the v3 retrieval-first layout")
   .argument("[dir]", "Project root", ".")
   .option("-y, --yes", "Skip confirmation prompt")
   .option("--compact", "Also compact over-cap files")

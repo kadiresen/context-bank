@@ -80,8 +80,30 @@ export const LEGACY_PATTERNS: RegExp[] = [
   /no matter how small/i,
 ];
 
-export function isLegacyContract(text: string): boolean {
-  return LEGACY_PATTERNS.some((re) => re.test(text));
+/** Lines that only the context-bank v1 templates ever wrote. */
+const V1_SIGNATURES: RegExp[] = [
+  /^> \*\*⚠️ MANDATORY AI AGENT INSTRUCTION:\*\*/m,
+  /^## ⚠️ MANDATORY: MEMORY MANAGEMENT PROTOCOL/m,
+];
+
+/** True when the text names Context Bank or points into `.ai/`. */
+export function hasContextBankMarker(text: string): boolean {
+  return text.includes("Context Bank") || text.includes(".ai/");
+}
+
+/**
+ * Detects the context-bank v1 "update every file after every task" contract. A single
+ * phrase such as "no matter how small" is ordinary wording, so the broad patterns
+ * only count when at least two appear together next to a Context Bank marker. A file
+ * that context-bank generated and owns (`ownedFile`) is its own marker.
+ */
+export function isLegacyContract(
+  text: string,
+  opts: { ownedFile?: boolean } = {},
+): boolean {
+  if (V1_SIGNATURES.some((re) => re.test(text))) return true;
+  const hits = LEGACY_PATTERNS.filter((re) => re.test(text)).length;
+  return hits >= 2 && (opts.ownedFile === true || hasContextBankMarker(text));
 }
 
 export function hasStaleUncommittedMarker(text: string): boolean {

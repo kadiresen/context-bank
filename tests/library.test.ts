@@ -14,9 +14,17 @@ describe("bankVersion", () => {
   it("returns 1 for a legacy contract", async () => {
     const root = await tmpDir();
     await writeAi(root, {
-      "AGENTS.md": "# Rules\n\nAFTER EVERY TASK update memory. DO NOT SKIP THIS UPDATE.\n",
+      "AGENTS.md": "# Rules\n\nThis project uses **Context Bank**.\n\nAFTER EVERY TASK update memory. DO NOT SKIP THIS UPDATE.\n",
     });
     expect(await lib.bankVersion(root)).toBe(1);
+  });
+
+  it("returns null for v1-like wording without a Context Bank marker", async () => {
+    const root = await tmpDir();
+    await writeAi(root, {
+      "AGENTS.md": "# Rules\n\nAFTER EVERY TASK update memory. DO NOT SKIP THIS UPDATE.\n",
+    });
+    expect(await lib.bankVersion(root)).toBeNull();
   });
 
   it("returns 2 for a v2 bank with story.md", async () => {

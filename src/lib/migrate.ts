@@ -15,20 +15,30 @@ import { CLINE_ARCHIVE, hasClineBank, importClineBank } from "./cline.js";
 import { compactBank } from "./compact.js";
 import { defaultTemplateDir } from "./init-bank.js";
 import { migrateStoryToV3 } from "./migrate-v3.js";
-import { BANK_FILES, aiPath, agentsPath, readIfExists } from "./scan.js";
+import {
+  BANK_FILES,
+  agentsPath,
+  assertNoSymlinkPath,
+  readIfExists,
+  readInRoot,
+  writeInRoot,
+} from "./scan.js";
 
 export type MigrateOptions = {
   compact?: boolean;
   date?: string;
 };
 
+const V1_BANNER_LINE = "> **⚠️ MANDATORY AI AGENT INSTRUCTION:**";
+
+/** Removes the v1 MANDATORY banner block under the title; any other blockquote is user content. */
 function stripBlockquoteBanner(text: string): string {
   const lines = text.split("\n");
   let i = 0;
   while (i < lines.length && (lines[i].trim() === "" || /^# /.test(lines[i]))) {
     i += 1;
   }
-  if (i < lines.length && (lines[i].startsWith("> **⚠️") || lines[i].startsWith(">"))) {
+  if (i < lines.length && lines[i].trim() === V1_BANNER_LINE) {
     const start = i;
     while (i < lines.length && (lines[i].startsWith(">") || lines[i].trim() === "")) {
       i += 1;
@@ -70,7 +80,7 @@ function migrateContract(
   v2: string,
   v3: string,
   hasStoryRef: boolean,
-): { text: string; note?: string } {
+): { text: string; note?: string; replaced?: boolean } {
   const crlf = (t: string) => t.replace(/\n/g, "\r\n");
   const v2Trim = v2.trimEnd();
   const v3Trim = v3.trimEnd();
@@ -78,7 +88,7 @@ function migrateContract(
   if (text.includes(crlf(v2Trim))) {
     return { text: text.replace(crlf(v2Trim), () => crlf(v3Trim)) };
   }
-  if (isLegacyContract(text)) return { text: v3 };
+  if (isLegacyContract(text)) return { text: v3, replaced: true };
   if (!hasStoryRef || !text.includes("Context Bank") || !/story\.md/.test(text)) {
     return { text };
   }
@@ -142,20 +152,54 @@ export async function migrateBank(
   const changed: string[] = [];
   const notes: string[] = [];
 
+  const day = options.date ?? new Date().toISOString().split("T")[0]!;
+
   const write = async (rel: string, body: string) => {
     const full = body.endsWith("\n") ? body : `${body}\n`;
+    const st = await fs.lstat(path.join(root, rel)).catch(() => null);
+    if (st !== null && !st.isFile() && !st.isSymbolicLink()) {
+      notes.push(`${rel} is not a regular file; left as is`);
+      return;
+    }
     if ((await readIfExists(path.join(root, rel))) === full) return;
-    await fs.writeFile(path.join(root, rel), full);
+    await writeInRoot(root, rel, full);
     changed.push(rel);
+  };
+
+  /** Copies a file's original text to a unique `.ai/archive/<basename>-<date>.md`. */
+  const archiveOriginal = async (rel: string, text: string): Promise<string> => {
+    const base = path.basename(rel).replace(/\.[^.]+$/, "");
+    let archiveRel = `.ai/archive/${base}-${day}.md`;
+    for (let n = 2; await fs.pathExists(path.join(root, archiveRel)); n++) {
+      archiveRel = `.ai/archive/${base}-${day}-${n}.md`;
+    }
+    await writeInRoot(root, archiveRel, text);
+    changed.push(archiveRel);
+    return archiveRel;
+  };
+
+  /** Writes a migrated contract; a wholesale replacement archives the original first. */
+  const writeContract = async (
+    rel: string,
+    original: string,
+    r: { text: string; note?: string; replaced?: boolean },
+  ) => {
+    if (r.note) notes.push(r.note);
+    if (r.replaced && r.text !== original) {
+      await assertNoSymlinkPath(root, rel);
+      const archiveRel = await archiveOriginal(rel, original);
+      notes.push(
+        `${rel} used the v1 every-task update contract and was replaced with the v3 contract. The original is in ${archiveRel}; copy any of your own sections back by hand.`,
+      );
+    }
+    await write(rel, r.text);
   };
 
   if (
     (await hasClineBank(root)) &&
     !(await fs.pathExists(path.join(root, CLINE_ARCHIVE)))
   ) {
-    const cline = await importClineBank(root, {
-      date: options.date ?? new Date().toISOString().split("T")[0],
-    });
+    const cline = await importClineBank(root, { date: day });
     changed.push(...cline.changed);
     notes.push(...cline.notes);
   }
@@ -164,16 +208,14 @@ export async function migrateBank(
   if (agents === null) {
     await write("AGENTS.md", V3_AGENTS_MD);
   } else {
-    const r = migrateContract(agents, V2_AGENTS_MD, V3_AGENTS_MD, true);
-    if (r.note) notes.push(r.note);
-    await write("AGENTS.md", r.text);
+    await writeContract("AGENTS.md", agents, migrateContract(agents, V2_AGENTS_MD, V3_AGENTS_MD, true));
   }
 
   const claude = await readIfExists(path.join(root, "CLAUDE.md"));
   if (claude === null) {
     await write("CLAUDE.md", V3_CLAUDE_MD);
   } else {
-    await write("CLAUDE.md", migrateContract(claude, V2_CLAUDE_MD, V3_CLAUDE_MD, false).text);
+    await writeContract("CLAUDE.md", claude, migrateContract(claude, V2_CLAUDE_MD, V3_CLAUDE_MD, false));
   }
 
   const banners: Record<string, string> = {
@@ -183,8 +225,7 @@ export async function migrateBank(
   };
 
   for (const name of BANK_FILES) {
-    const file = aiPath(root, name);
-    let text = await readIfExists(file);
+    let text = await readInRoot(root, path.join(".ai", name));
     if (text === null) continue;
     const before = text;
     if (name === "rules.md") {
@@ -199,8 +240,7 @@ export async function migrateBank(
     }
   }
 
-  const date = options.date ?? new Date().toISOString().split("T")[0]!;
-  const story = await migrateStoryToV3(root, { date });
+  const story = await migrateStoryToV3(root, { date: day });
   changed.push(...story.created, ...story.removed);
   if (story.created.length > 0) {
     notes.push(
@@ -208,26 +248,18 @@ export async function migrateBank(
     );
   }
   const storyDir = path.join(root, ".ai/story");
-  if ((await fs.pathExists(aiPath(root, "rules.md"))) && !(await fs.pathExists(storyDir))) {
-    await fs.ensureDir(storyDir);
-    await fs.writeFile(path.join(storyDir, ".gitkeep"), "");
+  if ((await readInRoot(root, ".ai/rules.md")) !== null && !(await fs.pathExists(storyDir))) {
+    await writeInRoot(root, ".ai/story/.gitkeep", "");
     changed.push(".ai/story/.gitkeep");
   }
 
   for (const rel of OWNED_POINTER_FILES) {
-    const text = await readIfExists(path.join(root, rel));
-    if (text === null || !isLegacyContract(text)) continue;
+    const text = await readInRoot(root, rel);
+    if (text === null || !isLegacyContract(text, { ownedFile: true })) continue;
     const tpl = await readIfExists(path.join(defaultTemplateDir(), rel));
     if (tpl === null) continue;
-    const day = options.date ?? new Date().toISOString().split("T")[0]!;
-    const base = path.basename(rel).replace(/\.[^.]+$/, "");
-    let archiveRel = `.ai/archive/${base}-${day}.md`;
-    for (let n = 2; await fs.pathExists(path.join(root, archiveRel)); n++) {
-      archiveRel = `.ai/archive/${base}-${day}-${n}.md`;
-    }
-    await fs.ensureDir(path.join(root, ".ai/archive"));
-    await fs.writeFile(path.join(root, archiveRel), text);
-    changed.push(archiveRel);
+    const archiveRel = await archiveOriginal(rel, text);
+    notes.push(`${rel} used the v1 contract and was replaced with the current template. The original is in ${archiveRel}.`);
     await write(rel, tpl);
   }
 

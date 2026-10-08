@@ -27,7 +27,7 @@ export async function initCommand(options: {
     });
     outro(
       chalk.green(`
-Context Bank v2 ready.
+Context Bank v3 ready.
 
 Next:
 1. Fill in .ai/rules.md (stack + conventions only).

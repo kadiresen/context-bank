@@ -26,7 +26,7 @@ const legacyStory = findings.some((line) => /legacy-story/.test(line));
 const advice = legacyStory
   ? "The bank still has the v2 single-file story. Suggest `npx -y context-bank@3.0.0 migrate` to the user; it splits that file into one file per decision under .ai/story/. Do not preload it."
   : legacy
-  ? "The bank still uses a read-or-update-everything contract (v1, v2 or Cline Memory Bank). Suggest `npx -y context-bank@3.0.0 migrate` to the user; do not follow the old update-every-file instructions."
+  ? "The bank still has the old Context Bank v1 contract (update every .ai/ file after every task) or a Cline Memory Bank read-every-file rule. Suggest `npx -y context-bank@3.0.0 migrate` to the user. Until then, skip only that update-every-file / read-every-file rule; every other instruction in AGENTS.md, CLAUDE.md and the bank still applies."
   : "Do not preload over-cap files. When it fits the work, suggest /context-bank:compact for active-context or roadmap (never without approval); architecture.md is not compacted and needs a manual rewrite to its current shape.";
 
 process.stdout.write(

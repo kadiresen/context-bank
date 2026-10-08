@@ -1,8 +1,8 @@
 import path from "node:path";
 import fs from "fs-extra";
 import { CAPS, V2_STORY_BANNER } from "./contract.js";
-import { STORY_DIR, addDecision } from "./decisions.js";
-import { LEGACY_STORY } from "./scan.js";
+import { STORY_DIR, addDecision, decisionOverhead } from "./decisions.js";
+import { LEGACY_STORY, assertNoSymlinkPath, hasSymlinkInPath } from "./scan.js";
 
 const INCEPTION_DATE = "0000-00-00";
 
@@ -104,12 +104,14 @@ function parseSections(content: string): { preamble: string; sections: Section[]
   return { preamble, sections };
 }
 
-async function isRegularFile(p: string): Promise<boolean> {
-  const st = await fs.lstat(p).catch(() => null);
+async function isRegularFile(root: string, rel: string): Promise<boolean> {
+  if (await hasSymlinkInPath(root, rel)) return false;
+  const st = await fs.lstat(path.join(root, rel)).catch(() => null);
   return st !== null && st.isFile();
 }
 
 async function findPlaceholders(root: string): Promise<string[]> {
+  if (await hasSymlinkInPath(root, STORY_DIR)) return [];
   const dir = path.join(root, STORY_DIR);
   const st = await fs.lstat(dir).catch(() => null);
   if (!st || !st.isDirectory()) return [];
@@ -136,18 +138,20 @@ export async function migrateStoryToV3(
   const sources: { rel: string; kind: "story" | "archive"; fallbackDate: string }[] = [];
 
   const archiveDir = path.join(root, ".ai/archive");
-  const archSt = await fs.lstat(archiveDir).catch(() => null);
+  const archSt = (await hasSymlinkInPath(root, ".ai/archive"))
+    ? null
+    : await fs.lstat(archiveDir).catch(() => null);
   if (archSt?.isDirectory()) {
     for (const name of (await fs.readdir(archiveDir)).sort()) {
       if (!/^story-.*\.md$/.test(name)) continue;
       const rel = `.ai/archive/${name}`;
-      if (!(await isRegularFile(path.join(root, rel)))) continue;
+      if (!(await isRegularFile(root, rel))) continue;
       const d = /^story-(\d{4}-\d{2}-\d{2})/.exec(name);
       sources.push({ rel, kind: "archive", fallbackDate: d ? d[1]! : opts.date });
     }
   }
   const storyRel = `.ai/${LEGACY_STORY}`;
-  if (await isRegularFile(path.join(root, storyRel))) {
+  if (await isRegularFile(root, storyRel)) {
     sources.push({ rel: storyRel, kind: "story", fallbackDate: opts.date });
   }
 
@@ -156,7 +160,7 @@ export async function migrateStoryToV3(
   const expected: { rel: string; body: string }[] = [];
 
   const put = async (title: string, body: string, date: string) => {
-    const overhead = (t: string) => `# ${t}\n\nDate: ${date}\n\n`.length + 1;
+    const overhead = (t: string) => decisionOverhead(t, date);
     const plain = title.replace(/\s+/g, " ").trim();
     const budget =
       body.length + overhead(plain) <= cap
@@ -202,12 +206,14 @@ export async function migrateStoryToV3(
   }
 
   for (const src of sources) {
+    await assertNoSymlinkPath(root, src.rel);
     await fs.remove(path.join(root, src.rel));
     removed.push(src.rel);
   }
   const inceptionMade = created.some((c) => c.includes("/0000-00-00-project-inception"));
   if (inceptionMade) {
     for (const p of placeholders) {
+      await assertNoSymlinkPath(root, p);
       await fs.remove(path.join(root, p));
       removed.push(p);
     }

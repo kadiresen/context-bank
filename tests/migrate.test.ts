@@ -325,6 +325,9 @@ describe("migrateBank 2 -> 3", () => {
     const res = await migrateBank(root, {});
     const a = await fs.readFile(path.join(root, "AGENTS.md"), "utf-8");
     expect(a).toContain("Our own rule: also log things in `.ai/story.md` weekly.");
+    expect(a).not.toContain("- `.ai/story.md` \u2014 rare decisions.");
+    const v3StoryLine = V3_AGENTS_MD.split("\n").find((l) => l.startsWith("- `.ai/story/`"))!;
+    expect(a).toContain(v3StoryLine);
     expect(res.notes.join("\n")).toContain("customized contract");
   });
 

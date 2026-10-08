@@ -45,6 +45,18 @@ describe("compactBank", () => {
     ).toBe(true);
   });
 
+  it("writes nothing on a dry run", async () => {
+    const root = await tmpDir();
+    const bloated = ["# Active Context", "", "## Current Focus", ...Array.from({ length: 200 }, (_, i) => `- item ${i}`)].join("\n");
+    await writeAi(root, { ".ai/active-context.md": bloated, ".ai/rules.md": "# rules\n" });
+    const result = await compactBank(root, { date: "2026-08-31", dryRun: true });
+    expect(result.dryRun).toBe(true);
+    expect(result.changed).toEqual([".ai/active-context.md"]);
+    expect(result.archived).toEqual([".ai/archive/active-context-2026-08-31.md"]);
+    expect(await fs.readFile(path.join(root, ".ai/active-context.md"), "utf-8")).toBe(bloated);
+    expect(await fs.pathExists(path.join(root, ".ai/archive"))).toBe(false);
+  });
+
   it("does not overwrite an existing archive file", async () => {
     const root = await tmpDir();
     await writeAi(root, {

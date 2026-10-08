@@ -3,7 +3,15 @@ import fs from "fs-extra";
 import { CLINE_DIR, findClineContracts, hasClineBank } from "./cline.js";
 import { CAPS, hasStaleUncommittedMarker, isLegacyContract } from "./contract.js";
 import { STORY_DIR } from "./decisions.js";
-import { BANK_FILES, LEGACY_STORY, aiPath, agentsPath, readIfExists } from "./scan.js";
+import {
+  BANK_FILES,
+  LEGACY_STORY,
+  aiPath,
+  agentsPath,
+  hasSymlinkInPath,
+  readIfExists,
+  readInRoot,
+} from "./scan.js";
 
 export type Finding = {
   code: string;
@@ -19,7 +27,7 @@ export type Report = {
 
 export async function diagnose(root: string): Promise<Report> {
   const findings: Finding[] = [];
-  const rules = await readIfExists(aiPath(root, "rules.md"));
+  const rules = await readInRoot(root, ".ai/rules.md");
   if (rules === null) {
     findings.push({
       code: "missing-rules",
@@ -48,7 +56,7 @@ export async function diagnose(root: string): Promise<Report> {
 
   for (const name of BANK_FILES) {
     const file = aiPath(root, name);
-    const text = await readIfExists(file);
+    const text = await readInRoot(root, `.ai/${name}`);
     if (text === null) continue;
     if (isLegacyContract(text)) {
       findings.push({
@@ -80,7 +88,7 @@ export async function diagnose(root: string): Promise<Report> {
     }
   }
 
-  if ((await readIfExists(aiPath(root, LEGACY_STORY))) !== null) {
+  if ((await readInRoot(root, `.ai/${LEGACY_STORY}`)) !== null) {
     findings.push({
       code: "legacy-story",
       severity: "warn",
@@ -91,7 +99,9 @@ export async function diagnose(root: string): Promise<Report> {
   }
 
   const storyDir = path.join(root, STORY_DIR);
-  const storyStat = await fs.lstat(storyDir).catch(() => null);
+  const storyStat = (await hasSymlinkInPath(root, STORY_DIR))
+    ? null
+    : await fs.lstat(storyDir).catch(() => null);
   if (storyStat?.isDirectory()) {
     const cap = CAPS["decision"]!;
     const entries = await fs.readdir(storyDir, { withFileTypes: true });

@@ -7,7 +7,7 @@ import {
   V2_RULES_PROTOCOL,
   V2_STORY_BANNER,
 } from "./contract.js";
-import { aiPath, readIfExists } from "./scan.js";
+import { aiPath, assertNoSymlinkPath, readIfExists, writeInRoot } from "./scan.js";
 
 export const CLINE_DIR = "memory-bank";
 export const CLINE_ARCHIVE = ".ai/archive/cline-memory-bank";
@@ -104,17 +104,17 @@ export async function importClineBank(
     "story.md": `# Story\n\n${V2_STORY_BANNER.trim()}\n\n### ${options.date} - Migrated from Cline Memory Bank\n- Moved \`memory-bank/\` into \`.ai/\`. Originals are in \`${archiveRel}\`.\n- Replaced Cline's read-every-file-on-every-task instruction with the retrieval-first contract in \`AGENTS.md\`.\n`,
   };
 
-  await fs.ensureDir(path.join(root, ".ai"));
   for (const [name, body] of Object.entries(targets)) {
     const file = aiPath(root, name);
     if (await fs.pathExists(file)) {
       notes.push(`.ai/${name} already existed; left as is. Merge anything missing from ${archiveRel} by hand.`);
       continue;
     }
-    await fs.writeFile(file, `${body.trimEnd()}\n`);
+    await writeInRoot(root, `.ai/${name}`, `${body.trimEnd()}\n`);
     changed.push(`.ai/${name}`);
   }
 
+  await assertNoSymlinkPath(root, CLINE_ARCHIVE);
   await fs.copy(path.join(root, CLINE_DIR), path.join(root, CLINE_ARCHIVE, CLINE_DIR), {
     overwrite: false,
   });
@@ -129,8 +129,9 @@ export async function importClineBank(
       );
       continue;
     }
+    await assertNoSymlinkPath(root, path.join(CLINE_ARCHIVE, rel));
     await fs.copy(path.join(root, rel), path.join(root, CLINE_ARCHIVE, rel), { overwrite: false });
-    await fs.writeFile(path.join(root, rel), CLINE_POINTER);
+    await writeInRoot(root, rel, CLINE_POINTER);
     changed.push(rel);
   }
 

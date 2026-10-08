@@ -67,6 +67,13 @@ const { entries } = await searchDecisions(root, "postgres"); // [{ path, text }]
 const { ok, findings } = await diagnose(root);
 ```
 
+`addDecision` writes `.ai/story/<date>-<slug>[-<suffix>].md` and returns `{ path, date, title }`. Options:
+
+- `date`: `YYYY-MM-DD`; defaults to today (UTC).
+- `suffix`: a branch- or session-unique token (letters, digits and dashes, up to 32 characters) so two branches that add the same decision on the same day do not collide in git. Leave it out for no suffix; `""` is invalid. If the name is still taken, `-2`, `-3`, ... is added on top.
+
+It throws when the title is empty or the whole file (title, date line and body) would exceed 4,000 characters.
+
 ## Claude Code plugin
 
 ```bash

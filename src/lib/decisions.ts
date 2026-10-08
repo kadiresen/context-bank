@@ -1,6 +1,7 @@
 import path from "node:path";
 import fs from "fs-extra";
 import { CAPS } from "./contract.js";
+import { assertNoSymlinkPath, hasSymlinkInPath } from "./scan.js";
 
 export type Decision = { path: string; date: string; title: string };
 
@@ -23,13 +24,23 @@ export function decisionSlug(title: string): string {
   return slug || "decision";
 }
 
+/** Characters a decision file adds around its body: the title line, Date line and final newline. */
+export function decisionOverhead(title: string, date: string): number {
+  return renderDecision(title, date, "").length;
+}
+
+function renderDecision(title: string, date: string, body: string): string {
+  return `# ${title}\n\nDate: ${date}\n\n${body}\n`;
+}
+
 export async function addDecision(
   root: string,
   d: { title: string; body: string; date?: string; suffix?: string },
 ): Promise<Decision> {
   const cap = CAPS["decision"]!;
-  if (d.body.length > cap) {
-    throw new Error(`decision body exceeds ${cap} characters`);
+  const title = d.title.replace(/\s+/g, " ").trim();
+  if (!title) {
+    throw new Error("decision title is required");
   }
   const date = d.date ?? new Date().toISOString().slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -38,17 +49,14 @@ export async function addDecision(
   if (d.suffix !== undefined && !(d.suffix.length <= 32 && /^[a-z0-9][a-z0-9-]*$/i.test(d.suffix))) {
     throw new Error("decision suffix must be 1-32 letters, digits or dashes");
   }
-  const title = d.title.replace(/\s+/g, " ").trim();
-  for (const rel of [".ai", STORY_DIR]) {
-    const st = await fs.lstat(path.join(root, rel)).catch(() => null);
-    if (st?.isSymbolicLink()) {
-      throw new Error("refusing to write through a symlinked .ai/story");
-    }
+  const content = renderDecision(title, date, d.body);
+  if (content.length > cap) {
+    throw new Error(`decision exceeds ${cap} characters`);
   }
+  await assertNoSymlinkPath(root, STORY_DIR);
   const base = `${date}-${decisionSlug(title)}${d.suffix ? `-${d.suffix}` : ""}`;
   const dir = path.join(root, STORY_DIR);
   await fs.ensureDir(dir);
-  const content = `# ${title}\n\nDate: ${date}\n\n${d.body}\n`;
   for (let n = 1; ; n++) {
     const name = n === 1 ? `${base}.md` : `${base}-${n}.md`;
     try {
@@ -63,6 +71,7 @@ export async function addDecision(
 type Raw = Decision & { text: string; name: string };
 
 async function readAll(root: string): Promise<Raw[]> {
+  if (await hasSymlinkInPath(root, STORY_DIR)) return [];
   const dir = path.join(root, STORY_DIR);
   let dirStat;
   try {

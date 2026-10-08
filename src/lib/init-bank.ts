@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import fs from "fs-extra";
 import { V3_AGENTS_MD, V3_CLAUDE_MD } from "./contract.js";
 import { STORY_DIR, addDecision } from "./decisions.js";
+import { assertNoSymlinkPath, hasSymlinkInPath, writeInRoot } from "./scan.js";
 
 export type InitOptions = {
   legacyPointers?: boolean;
@@ -14,22 +15,26 @@ export function defaultTemplateDir(): string {
   return path.resolve(here, "../../templates");
 }
 
-async function copyMissing(src: string, dest: string): Promise<void> {
+/** Copies template files that are missing under `root/rel`; never writes through a symlink. */
+async function copyMissing(src: string, root: string, rel: string): Promise<void> {
   const stats = await fs.stat(src);
+  const dest = path.join(root, rel);
   if (stats.isDirectory()) {
+    if (!(await fs.pathExists(dest))) await assertNoSymlinkPath(root, rel);
     await fs.ensureDir(dest);
     for (const file of await fs.readdir(src)) {
-      await copyMissing(path.join(src, file), path.join(dest, file));
+      await copyMissing(path.join(src, file), root, path.join(rel, file));
     }
     return;
   }
   if (await fs.pathExists(dest)) return;
+  await assertNoSymlinkPath(root, rel);
   await fs.copy(src, dest);
 }
 
-async function writeIfMissing(dest: string, body: string): Promise<void> {
-  if (await fs.pathExists(dest)) return;
-  await fs.writeFile(dest, body.endsWith("\n") ? body : `${body}\n`);
+async function writeIfMissing(root: string, rel: string, body: string): Promise<void> {
+  if (await fs.pathExists(path.join(root, rel))) return;
+  await writeInRoot(root, rel, body.endsWith("\n") ? body : `${body}\n`);
 }
 
 export async function initializeBank(
@@ -41,9 +46,10 @@ export async function initializeBank(
     throw new Error(`Template directory not found at: ${templateDir}`);
   }
 
-  await copyMissing(path.join(templateDir, ".ai"), path.join(targetDir, ".ai"));
+  await copyMissing(path.join(templateDir, ".ai"), targetDir, ".ai");
   const storyDir = path.join(targetDir, STORY_DIR);
   const hasDecision =
+    !(await hasSymlinkInPath(targetDir, STORY_DIR)) &&
     (await fs.pathExists(storyDir)) &&
     (await fs.readdir(storyDir)).some((f) => f.endsWith(".md"));
   if (!hasDecision) {
@@ -52,15 +58,16 @@ export async function initializeBank(
       body: "Vision: [Initial project goal]",
     });
   }
-  await writeIfMissing(path.join(targetDir, "AGENTS.md"), V3_AGENTS_MD);
-  await writeIfMissing(path.join(targetDir, "CLAUDE.md"), V3_CLAUDE_MD);
+  await writeIfMissing(targetDir, "AGENTS.md", V3_AGENTS_MD);
+  await writeIfMissing(targetDir, "CLAUDE.md", V3_CLAUDE_MD);
 
   const readmePath = path.join(targetDir, "README.md");
   const marker = "<!-- AI-CONTEXT: .ai/rules.md -->";
-  if (await fs.pathExists(readmePath)) {
+  // The marker is optional: a symlinked README.md is left alone instead of failing init.
+  if (!(await hasSymlinkInPath(targetDir, "README.md")) && (await fs.pathExists(readmePath))) {
     const readme = await fs.readFile(readmePath, "utf-8");
     if (!readme.includes(marker)) {
-      await fs.writeFile(readmePath, `${marker}\n${readme}`);
+      await writeInRoot(targetDir, "README.md", `${marker}\n${readme}`);
     }
   }
 
@@ -76,21 +83,23 @@ export async function initializeBank(
   for (const item of legacyItems) {
     const src = path.join(templateDir, item);
     if (await fs.pathExists(src)) {
-      await copyMissing(src, path.join(targetDir, item));
+      await copyMissing(src, targetDir, item);
     }
   }
 
   const aiderConfPath = path.join(targetDir, ".aider.conf.yml");
   if (!(await fs.pathExists(aiderConfPath))) {
-    await fs.writeFile(
-      aiderConfPath,
+    await writeInRoot(
+      targetDir,
+      ".aider.conf.yml",
       "# Context Bank: load project conventions read-only\nread: CONVENTIONS.md\n",
     );
   } else {
     const content = await fs.readFile(aiderConfPath, "utf-8");
     if (!content.includes("CONVENTIONS.md")) {
-      await fs.writeFile(
-        aiderConfPath,
+      await writeInRoot(
+        targetDir,
+        ".aider.conf.yml",
         `${content.trimEnd()}\n\n# Context Bank: load project conventions read-only\nread: CONVENTIONS.md\n`,
       );
     }
@@ -118,6 +127,5 @@ export async function initializeBank(
     ...existingCtx,
     fileName: [...new Set([...existingNames, "AGENTS.md", "GEMINI.md", ".ai/rules.md"])],
   };
-  await fs.ensureDir(path.dirname(geminiSettingsPath));
-  await fs.writeJson(geminiSettingsPath, geminiSettings, { spaces: 2 });
+  await writeInRoot(targetDir, ".gemini/settings.json", `${JSON.stringify(geminiSettings, null, 2)}\n`);
 }

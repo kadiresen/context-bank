@@ -59,11 +59,11 @@ describe("addDecision", () => {
     const outside = await tmpDir();
     const r1 = await tmpDir();
     await fs.symlink(outside, path.join(r1, ".ai"));
-    await expect(addDecision(r1, { title: "X", body: "b" })).rejects.toThrow("symlinked .ai/story");
+    await expect(addDecision(r1, { title: "X", body: "b" })).rejects.toThrow("refusing to follow a symlink: .ai/story");
     const r2 = await tmpDir();
     await fs.ensureDir(path.join(r2, ".ai"));
     await fs.symlink(outside, path.join(r2, ".ai/story"));
-    await expect(addDecision(r2, { title: "X", body: "b" })).rejects.toThrow("symlinked .ai/story");
+    await expect(addDecision(r2, { title: "X", body: "b" })).rejects.toThrow("refusing to follow a symlink: .ai/story");
     expect(await fs.readdir(outside)).toEqual([]);
   });
   it("collapses whitespace in the title header", async () => {
@@ -75,8 +75,23 @@ describe("addDecision", () => {
   it("rejects oversized body", async () => {
     const root = await tmpDir();
     await expect(addDecision(root, { title: "Big", body: "x".repeat(4001) })).rejects.toThrow(
-      "decision body exceeds 4000 characters",
+      "decision exceeds 4000 characters",
     );
+    expect(await fs.pathExists(path.join(root, ".ai/story"))).toBe(false);
+  });
+  it("caps the whole rendered file, header included", async () => {
+    const root = await tmpDir();
+    const header = "# Big\n\nDate: 2026-10-08\n\n".length + 1;
+    await expect(
+      addDecision(root, { title: "Big", body: "x".repeat(4000 - header + 1), date: "2026-10-08" }),
+    ).rejects.toThrow("decision exceeds 4000 characters");
+    const d = await addDecision(root, { title: "Big", body: "x".repeat(4000 - header), date: "2026-10-08" });
+    expect((await fs.readFile(path.join(root, d.path), "utf8")).length).toBe(4000);
+  });
+  it("rejects an empty or whitespace-only title", async () => {
+    const root = await tmpDir();
+    await expect(addDecision(root, { title: "", body: "b" })).rejects.toThrow("decision title is required");
+    await expect(addDecision(root, { title: " \n\t ", body: "b" })).rejects.toThrow("decision title is required");
     expect(await fs.pathExists(path.join(root, ".ai/story"))).toBe(false);
   });
 });

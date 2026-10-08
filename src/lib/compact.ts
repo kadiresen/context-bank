@@ -5,7 +5,7 @@ import {
   CAPS,
   V2_ACTIVE_BANNER,
 } from "./contract.js";
-import { LEGACY_STORY, aiPath, readIfExists } from "./scan.js";
+import { LEGACY_STORY, readInRoot, writeInRoot } from "./scan.js";
 
 export type CompactOptions = {
   date?: string;
@@ -115,7 +115,6 @@ export async function compactBank(
   const changed: string[] = [];
   const archived: string[] = [];
   const notes: string[] = [];
-  const archiveDir = path.join(root, ".ai/archive");
 
   const uniqueArchiveRel = async (rel: string): Promise<string> => {
     if (dryRun || !(await fs.pathExists(path.join(root, rel)))) return rel;
@@ -128,15 +127,12 @@ export async function compactBank(
   };
 
   const write = async (rel: string, body: string) => {
-    if (!dryRun) {
-      await fs.ensureDir(path.dirname(path.join(root, rel)));
-      await fs.writeFile(path.join(root, rel), body);
-    }
+    if (!dryRun) await writeInRoot(root, rel, body);
     changed.push(rel);
   };
 
   const activeRel = ".ai/active-context.md";
-  const active = await readIfExists(aiPath(root, "active-context.md"));
+  const active = await readInRoot(root, activeRel);
   const activeOverCap =
     active !== null &&
     (active.length > CAPS["active-context.md"] ||
@@ -145,29 +141,23 @@ export async function compactBank(
     const archiveRel = await uniqueArchiveRel(
       `.ai/archive/active-context-${date}.md`,
     );
-    if (!dryRun) {
-      await fs.ensureDir(archiveDir);
-      await fs.writeFile(path.join(root, archiveRel), active);
-    }
+    if (!dryRun) await writeInRoot(root, archiveRel, active);
     archived.push(archiveRel);
     await write(activeRel, compactActiveContext(active, archiveRel));
   }
 
-  if ((await readIfExists(aiPath(root, LEGACY_STORY))) !== null) {
+  if ((await readInRoot(root, `.ai/${LEGACY_STORY}`)) !== null) {
     notes.push("run migrate to move story.md into .ai/story");
   }
 
-  const roadmap = await readIfExists(aiPath(root, "roadmap.md"));
+  const roadmap = await readInRoot(root, ".ai/roadmap.md");
   if (roadmap && roadmap.length > CAPS["roadmap.md"]) {
     const archiveRel = await uniqueArchiveRel(
       `.ai/archive/roadmap-completed-${date}.md`,
     );
     const { next, archive } = compactRoadmap(roadmap, archiveRel);
     if (archive) {
-      if (!dryRun) {
-        await fs.ensureDir(archiveDir);
-        await fs.writeFile(path.join(root, archiveRel), archive);
-      }
+      if (!dryRun) await writeInRoot(root, archiveRel, archive);
       archived.push(archiveRel);
       await write(".ai/roadmap.md", next);
     }
