@@ -62,7 +62,6 @@ export const V2_ARCH_BANNER = `Current shape of the system, not a changelog. Upd
 export const V2_ROADMAP_BANNER = `Open work. Move long completed lists to \`.ai/archive/\` so this file stays skimmable.
 `;
 
-export const KEEP_STORY_ENTRIES = 12;
 export const ACTIVE_CONTEXT_MAX_LINES = 80;
 
 export const CAPS: Record<string, number> = {
@@ -70,7 +69,6 @@ export const CAPS: Record<string, number> = {
   "active-context.md": 8_000,
   "architecture.md": 40_000,
   "roadmap.md": 20_000,
-  "story.md": 30_000,
   decision: 4_000,
 };
 

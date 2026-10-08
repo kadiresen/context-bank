@@ -1,6 +1,8 @@
 import path from "node:path";
+import fs from "fs-extra";
 import { CLINE_DIR, findClineContracts, hasClineBank } from "./cline.js";
 import { CAPS, hasStaleUncommittedMarker, isLegacyContract } from "./contract.js";
+import { STORY_DIR } from "./decisions.js";
 import { BANK_FILES, LEGACY_STORY, aiPath, agentsPath, readIfExists } from "./scan.js";
 
 export type Finding = {
@@ -44,7 +46,7 @@ export async function diagnose(root: string): Promise<Report> {
     });
   }
 
-  for (const name of [...BANK_FILES, LEGACY_STORY]) {
+  for (const name of BANK_FILES) {
     const file = aiPath(root, name);
     const text = await readIfExists(file);
     if (text === null) continue;
@@ -76,6 +78,43 @@ export async function diagnose(root: string): Promise<Report> {
         file,
       });
     }
+  }
+
+  if ((await readIfExists(aiPath(root, LEGACY_STORY))) !== null) {
+    findings.push({
+      code: "legacy-story",
+      severity: "warn",
+      message:
+        ".ai/story.md is the v2 single-file story; run `context-bank migrate` to split it into .ai/story/",
+      file: aiPath(root, LEGACY_STORY),
+    });
+  }
+
+  const storyDir = path.join(root, STORY_DIR);
+  const storyStat = await fs.lstat(storyDir).catch(() => null);
+  if (storyStat?.isDirectory()) {
+    const cap = CAPS["decision"]!;
+    const entries = await fs.readdir(storyDir, { withFileTypes: true });
+    for (const entry of entries.sort((a, b) => (a.name < b.name ? -1 : 1))) {
+      if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+      const file = path.join(storyDir, entry.name);
+      const text = await fs.readFile(file, "utf8");
+      if (text.length > cap) {
+        findings.push({
+          code: "decision-over-cap",
+          severity: "warn",
+          message: `${STORY_DIR}/${entry.name} is ${text.length} chars (cap ${cap}); split it into smaller decisions`,
+          file,
+        });
+      }
+    }
+  } else if (agents !== null && agents.includes(`${STORY_DIR}/`)) {
+    findings.push({
+      code: "missing-story-dir",
+      severity: "info",
+      message: "AGENTS.md points to .ai/story/ but the directory is missing; create it or run `context-bank migrate`",
+      file: storyDir,
+    });
   }
 
   if (await hasClineBank(root)) {

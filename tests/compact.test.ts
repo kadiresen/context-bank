@@ -13,27 +13,6 @@ function storyWithEntries(n: number): string {
 }
 
 describe("compactBank", () => {
-  it("archives old story entries and keeps the latest ones", async () => {
-    const root = await tmpDir();
-    await writeAi(root, {
-      ".ai/story.md": storyWithEntries(20),
-      ".ai/active-context.md": "x".repeat(12_000),
-      ".ai/rules.md": "# rules\n",
-    });
-
-    const result = await compactBank(root, { date: "2026-08-31" });
-    expect(result.changed).toContain(".ai/story.md");
-
-    const kept = await fs.readFile(path.join(root, ".ai/story.md"), "utf-8");
-    expect(kept).toContain("Event 20");
-    expect(kept).toContain("Event 9");
-    expect(kept).not.toContain("### 2026-01-01");
-    expect(kept).toContain("archive/");
-
-    const archiveFiles = await fs.readdir(path.join(root, ".ai/archive"));
-    expect(archiveFiles.some((f) => f.startsWith("story-"))).toBe(true);
-  });
-
   it("rewrites a bloated active-context and archives the original", async () => {
     const root = await tmpDir();
     const bloated = [
@@ -92,95 +71,32 @@ describe("compactBank", () => {
     ).toBe(true);
   });
 
-  it("compacts a story whose entries use ## headings", async () => {
+  it("leaves a v3 bank's decisions alone and creates no story archive", async () => {
     const root = await tmpDir();
-    const entries = Array.from({ length: 30 }, (_, i) => {
-      const day = String(i + 1).padStart(2, "0");
-      return `## 2026-03-${day}: Event ${i + 1}\n${"- detail\n".repeat(40)}`;
-    });
+    const big = `# Big\n\nDate: 2026-01-01\n\n${"x".repeat(6_000)}\n`;
     await writeAi(root, {
-      ".ai/story.md": `# Story\n\n${entries.join("\n")}`,
+      ".ai/rules.md": "# rules\n",
+      ".ai/story/2026-01-01-big.md": big,
+      ".ai/story/2026-01-02-small.md": "# Small\n\nDate: 2026-01-02\n\nbody\n",
     });
-
     const result = await compactBank(root, { date: "2026-08-31" });
-    expect(result.changed).toContain(".ai/story.md");
-
-    const kept = await fs.readFile(path.join(root, ".ai/story.md"), "utf-8");
-    expect(kept).toContain("Event 30");
-    expect(kept).not.toContain("## 2026-03-01:");
-    const archive = await fs.readFile(
-      path.join(root, ".ai/archive/story-2026-08-31.md"),
-      "utf-8",
-    );
-    expect(archive).toContain("Event 1\n");
-  });
-
-  it("keeps the newest dated entries when the story is newest-first and mixes heading levels", async () => {
-    const root = await tmpDir();
-    const recent = Array.from({ length: 12 }, (_, i) => {
-      const day = String(28 - i).padStart(2, "0");
-      return `## 2026-08-${day} - Recent ${28 - i}\n${"- note\n".repeat(20)}`;
-    });
-    const old = Array.from({ length: 20 }, (_, i) => {
-      const day = String(i + 1).padStart(2, "0");
-      return `### 2026-01-${day} - Old ${i + 1}\n${"- note\n".repeat(20)}`;
-    });
-    await writeAi(root, {
-      ".ai/story.md": `# Story\n\n${recent.join("\n")}\n## Development Log\n\n${old.join("\n")}`,
-    });
-
-    await compactBank(root, { date: "2026-08-31" });
-
-    const kept = await fs.readFile(path.join(root, ".ai/story.md"), "utf-8");
-    expect(kept).toContain("Recent 28");
-    expect(kept).toContain("Recent 17");
-    expect(kept).not.toContain("Old 20");
-    expect(kept.indexOf("Recent 28")).toBeLessThan(kept.indexOf("Recent 17"));
-  });
-
-  it("brings story.md under the cap even when a few entries are huge", async () => {
-    const root = await tmpDir();
-    const entries = Array.from({ length: 6 }, (_, i) => {
-      const day = String(i + 1).padStart(2, "0");
-      return `### 2026-02-${day} - Big ${i + 1}\n${"x".repeat(14_000)}\n`;
-    });
-    await writeAi(root, {
-      ".ai/story.md": `# Story\n\n${entries.join("\n")}`,
-    });
-
-    await compactBank(root, { date: "2026-08-31" });
-
-    const kept = await fs.readFile(path.join(root, ".ai/story.md"), "utf-8");
-    expect(kept.length).toBeLessThanOrEqual(30_000);
-    expect(kept).toContain("Big 6");
-  });
-
-  it("truncates a single entry that alone exceeds the cap and archives it in full", async () => {
-    const root = await tmpDir();
-    await writeAi(root, {
-      ".ai/story.md": `# Story\n\n### 2026-02-01 - Small\n- a\n\n### 2026-02-02 - Huge\n${"line of text\n".repeat(4_000)}`,
-    });
-
-    await compactBank(root, { date: "2026-08-31" });
-
-    const kept = await fs.readFile(path.join(root, ".ai/story.md"), "utf-8");
-    expect(kept.length).toBeLessThanOrEqual(30_000);
-    expect(kept).toContain("Huge");
-    const archive = await fs.readFile(
-      path.join(root, ".ai/archive/story-2026-08-31.md"),
-      "utf-8",
-    );
-    expect(archive.length).toBeGreaterThan(40_000);
-  });
-
-  it("dry-run does not write", async () => {
-    const root = await tmpDir();
-    await writeAi(root, {
-      ".ai/story.md": storyWithEntries(20),
-    });
-    await compactBank(root, { date: "2026-08-31", dryRun: true });
+    expect(result.changed).toEqual([]);
+    expect(result.archived).toEqual([]);
+    expect(await fs.readFile(path.join(root, ".ai/story/2026-01-01-big.md"), "utf-8")).toBe(big);
     expect(await fs.pathExists(path.join(root, ".ai/archive"))).toBe(false);
-    const story = await fs.readFile(path.join(root, ".ai/story.md"), "utf-8");
-    expect(story).toContain("Event 1");
+  });
+
+  it("no longer compacts a v2 story.md and points to migrate", async () => {
+    const root = await tmpDir();
+    const story = storyWithEntries(20);
+    await writeAi(root, {
+      ".ai/rules.md": "# rules\n",
+      ".ai/story.md": story,
+    });
+    const result = await compactBank(root, { date: "2026-08-31" });
+    expect(result.changed).toEqual([]);
+    expect(result.notes).toContain("run migrate to move story.md into .ai/story");
+    expect(await fs.readFile(path.join(root, ".ai/story.md"), "utf-8")).toBe(story);
+    expect(await fs.pathExists(path.join(root, ".ai/archive"))).toBe(false);
   });
 });

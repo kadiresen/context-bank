@@ -22,6 +22,7 @@ export async function compactCommand(
   const result = await compactBank(root, { dryRun: options.dryRun === true });
   if (result.changed.length === 0) {
     console.log(chalk.green("Nothing to compact."));
+    for (const note of result.notes) console.log(chalk.gray(`note  ${note}`));
     return;
   }
   const prefix = result.dryRun ? "would change" : "changed";
@@ -30,5 +31,8 @@ export async function compactCommand(
   }
   for (const file of result.archived) {
     console.log(chalk.gray(`archived  ${file}`));
+  }
+  for (const note of result.notes) {
+    console.log(chalk.gray(`note  ${note}`));
   }
 }

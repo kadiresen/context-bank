@@ -3,9 +3,7 @@ import fs from "fs-extra";
 import {
   ACTIVE_CONTEXT_MAX_LINES,
   CAPS,
-  KEEP_STORY_ENTRIES,
   V2_ACTIVE_BANNER,
-  V2_STORY_BANNER,
 } from "./contract.js";
 import { LEGACY_STORY, aiPath, readIfExists } from "./scan.js";
 
@@ -17,6 +15,7 @@ export type CompactOptions = {
 export type CompactResult = {
   changed: string[];
   archived: string[];
+  notes: string[];
   dryRun: boolean;
 };
 
@@ -87,79 +86,6 @@ function compactActiveContext(content: string, archiveRel: string): string {
   return parts.join("\n");
 }
 
-type StoryEntry = { text: string; index: number; date: string | null };
-
-// Entries are ## or ### headings; banks mix both levels and both orders.
-function splitStory(content: string): { preamble: string; entries: StoryEntry[] } {
-  const parts = content.split(/^(?=#{2,3} )/m);
-  const entries = parts.slice(1).map((text, index) => {
-    const heading = text.split("\n")[0];
-    const match = heading.match(/\b(\d{4}-\d{2}(?:-\d{2})?)\b/);
-    return { text, index, date: match ? match[1] : null };
-  });
-  return { preamble: parts[0] ?? "", entries };
-}
-
-// Newest first: by heading date when most entries are dated, else by append order.
-function rankNewestFirst(entries: StoryEntry[]): StoryEntry[] {
-  const dated = entries.filter((e) => e.date !== null).length;
-  const byDate = dated * 2 >= entries.length;
-  return [...entries].sort((a, b) => {
-    if (byDate) {
-      const cmp = (b.date ?? "").localeCompare(a.date ?? "");
-      if (cmp !== 0) return cmp;
-    }
-    return b.index - a.index;
-  });
-}
-
-function compactStory(
-  content: string,
-  archiveRel: string,
-): { next: string; archive: string | null } {
-  const cap = CAPS[LEGACY_STORY];
-  const { preamble, entries } = splitStory(content);
-  if (entries.length <= KEEP_STORY_ENTRIES && content.length <= cap) {
-    return { next: content, archive: null };
-  }
-
-  const ranked = rankNewestFirst(entries);
-  const keepFirst = (n: number): StoryEntry[] => {
-    const keep = new Set(ranked.slice(0, n).map((e) => e.index));
-    return entries.filter((e) => keep.has(e.index));
-  };
-  const build = (kept: string[]): string =>
-    `${preamble.trim()}\n\n> ${V2_STORY_BANNER.trim()}\n> Older entries: \`${archiveRel}\`\n\n${kept.join("").trim()}\n`;
-
-  let keepCount = Math.min(KEEP_STORY_ENTRIES, entries.length);
-  while (keepCount > 1 && build(keepFirst(keepCount).map((e) => e.text)).length > cap) {
-    keepCount -= 1;
-  }
-  const kept = keepFirst(keepCount);
-  const keptIndexes = new Set(kept.map((e) => e.index));
-  const archived = entries.filter((e) => !keptIndexes.has(e.index)).map((e) => e.text);
-  let keptTexts = kept.map((e) => e.text);
-
-  let next = build(keptTexts);
-  if (next.length > cap && kept.length === 1) {
-    // One entry alone is over the cap: keep its head live, archive it in full.
-    const note = `\n\n_(Truncated. Full entry: \`${archiveRel}\`)_\n`;
-    const budget = Math.max(0, cap - build([""]).length - note.length);
-    let head = kept[0].text.slice(0, budget);
-    const lastBreak = head.lastIndexOf("\n");
-    if (lastBreak > 0) head = head.slice(0, lastBreak);
-    keptTexts = [`${head.trimEnd()}${note}`];
-    archived.push(kept[0].text);
-    next = build(keptTexts);
-  }
-
-  if (archived.length === 0 && content.length <= cap) {
-    return { next: content, archive: null };
-  }
-  const archive = `# Archived story\n\nMoved from \`.ai/story.md\` so the live file stays searchable-on-demand, not preloaded.\n\n${archived.join("").trim()}\n`;
-  return { next, archive };
-}
-
 function compactRoadmap(content: string, archiveRel: string): {
   next: string;
   archive: string | null;
@@ -188,6 +114,7 @@ export async function compactBank(
   const dryRun = options.dryRun === true;
   const changed: string[] = [];
   const archived: string[] = [];
+  const notes: string[] = [];
   const archiveDir = path.join(root, ".ai/archive");
 
   const uniqueArchiveRel = async (rel: string): Promise<string> => {
@@ -226,18 +153,8 @@ export async function compactBank(
     await write(activeRel, compactActiveContext(active, archiveRel));
   }
 
-  const story = await readIfExists(aiPath(root, LEGACY_STORY));
-  if (story) {
-    const archiveRel = await uniqueArchiveRel(`.ai/archive/story-${date}.md`);
-    const { next, archive } = compactStory(story, archiveRel);
-    if (archive) {
-      if (!dryRun) {
-        await fs.ensureDir(archiveDir);
-        await fs.writeFile(path.join(root, archiveRel), archive);
-      }
-      archived.push(archiveRel);
-      await write(".ai/story.md", next);
-    }
+  if ((await readIfExists(aiPath(root, LEGACY_STORY))) !== null) {
+    notes.push("run migrate to move story.md into .ai/story");
   }
 
   const roadmap = await readIfExists(aiPath(root, "roadmap.md"));
@@ -256,5 +173,5 @@ export async function compactBank(
     }
   }
 
-  return { changed, archived, dryRun };
+  return { changed, archived, notes, dryRun };
 }
