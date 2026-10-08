@@ -5,7 +5,7 @@
 ## Context files
 - `rules.md` is the always-on source of truth. Keep it small. Add a convention when the user states one.
 - `active-context.md` is current work only (aim for under 80 lines). Do not append session novels.
-- `story.md` is rare decisions. Search it; do not preload it.
+- `.ai/story/` holds rare decisions, one file each. Search it; do not preload it.
 - Do not touch every context file on each change.
 
 ## Project Overview

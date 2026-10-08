@@ -7,7 +7,7 @@ import {
   V2_ACTIVE_BANNER,
   V2_STORY_BANNER,
 } from "./contract.js";
-import { aiPath, readIfExists } from "./scan.js";
+import { LEGACY_STORY, aiPath, readIfExists } from "./scan.js";
 
 export type CompactOptions = {
   date?: string;
@@ -117,7 +117,7 @@ function compactStory(
   content: string,
   archiveRel: string,
 ): { next: string; archive: string | null } {
-  const cap = CAPS["story.md"];
+  const cap = CAPS[LEGACY_STORY];
   const { preamble, entries } = splitStory(content);
   if (entries.length <= KEEP_STORY_ENTRIES && content.length <= cap) {
     return { next: content, archive: null };
@@ -226,7 +226,7 @@ export async function compactBank(
     await write(activeRel, compactActiveContext(active, archiveRel));
   }
 
-  const story = await readIfExists(aiPath(root, "story.md"));
+  const story = await readIfExists(aiPath(root, LEGACY_STORY));
   if (story) {
     const archiveRel = await uniqueArchiveRel(`.ai/archive/story-${date}.md`);
     const { next, archive } = compactStory(story, archiveRel);

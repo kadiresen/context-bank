@@ -10,7 +10,7 @@ import {
 } from "./contract.js";
 import { CLINE_ARCHIVE, hasClineBank, importClineBank } from "./cline.js";
 import { compactBank } from "./compact.js";
-import { BANK_FILES, aiPath, agentsPath, readIfExists } from "./scan.js";
+import { BANK_FILES, LEGACY_STORY, aiPath, agentsPath, readIfExists } from "./scan.js";
 
 export type MigrateOptions = {
   compact?: boolean;
@@ -109,12 +109,12 @@ export async function migrateBank(
 
   const banners: Record<string, string> = {
     "active-context.md": "",
-    "story.md": "",
+    [LEGACY_STORY]: "",
     "architecture.md": V2_ARCH_BANNER,
     "roadmap.md": V2_ROADMAP_BANNER,
   };
 
-  for (const name of BANK_FILES) {
+  for (const name of [...BANK_FILES, LEGACY_STORY]) {
     const file = aiPath(root, name);
     let text = await readIfExists(file);
     if (text === null) continue;

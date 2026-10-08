@@ -1,7 +1,7 @@
 import path from "node:path";
 import { CLINE_DIR, findClineContracts, hasClineBank } from "./cline.js";
 import { CAPS, hasStaleUncommittedMarker, isLegacyContract } from "./contract.js";
-import { BANK_FILES, aiPath, agentsPath, readIfExists } from "./scan.js";
+import { BANK_FILES, LEGACY_STORY, aiPath, agentsPath, readIfExists } from "./scan.js";
 
 export type Finding = {
   code: string;
@@ -44,7 +44,7 @@ export async function diagnose(root: string): Promise<Report> {
     });
   }
 
-  for (const name of BANK_FILES) {
+  for (const name of [...BANK_FILES, LEGACY_STORY]) {
     const file = aiPath(root, name);
     const text = await readIfExists(file);
     if (text === null) continue;

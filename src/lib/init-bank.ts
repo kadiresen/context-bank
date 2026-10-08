@@ -1,7 +1,8 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import fs from "fs-extra";
-import { V2_AGENTS_MD, V2_CLAUDE_MD } from "./contract.js";
+import { V3_AGENTS_MD, V3_CLAUDE_MD } from "./contract.js";
+import { STORY_DIR, addDecision } from "./decisions.js";
 
 export type InitOptions = {
   legacyPointers?: boolean;
@@ -24,14 +25,6 @@ async function copyMissing(src: string, dest: string): Promise<void> {
   }
   if (await fs.pathExists(dest)) return;
   await fs.copy(src, dest);
-  if (path.basename(dest) === "story.md") {
-    let story = await fs.readFile(dest, "utf-8");
-    story = story.replace(
-      "[Auto-filled by init]",
-      new Date().toISOString().split("T")[0],
-    );
-    await fs.writeFile(dest, story);
-  }
 }
 
 async function writeIfMissing(dest: string, body: string): Promise<void> {
@@ -49,8 +42,18 @@ export async function initializeBank(
   }
 
   await copyMissing(path.join(templateDir, ".ai"), path.join(targetDir, ".ai"));
-  await writeIfMissing(path.join(targetDir, "AGENTS.md"), V2_AGENTS_MD);
-  await writeIfMissing(path.join(targetDir, "CLAUDE.md"), V2_CLAUDE_MD);
+  const storyDir = path.join(targetDir, STORY_DIR);
+  const hasDecision =
+    (await fs.pathExists(storyDir)) &&
+    (await fs.readdir(storyDir)).some((f) => f.endsWith(".md"));
+  if (!hasDecision) {
+    await addDecision(targetDir, {
+      title: "Project inception",
+      body: "Vision: [Initial project goal]",
+    });
+  }
+  await writeIfMissing(path.join(targetDir, "AGENTS.md"), V3_AGENTS_MD);
+  await writeIfMissing(path.join(targetDir, "CLAUDE.md"), V3_CLAUDE_MD);
 
   const readmePath = path.join(targetDir, "README.md");
   const marker = "<!-- AI-CONTEXT: .ai/rules.md -->";

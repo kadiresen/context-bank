@@ -7,5 +7,5 @@ alwaysApply: true
 
 Read `.ai/rules.md` for stack and conventions.
 Read `.ai/active-context.md` only to resume current work; keep that file short.
-Do not preload `.ai/story.md`. Search it when you need a past decision.
+Do not preload `.ai/story/`. Search it when you need a past decision.
 Do not touch every `.ai/` file on each change.

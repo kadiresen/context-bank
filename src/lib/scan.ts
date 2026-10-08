@@ -6,8 +6,10 @@ export const BANK_FILES = [
   "active-context.md",
   "architecture.md",
   "roadmap.md",
-  "story.md",
 ] as const;
+
+/** v2 single-file story, still processed by migrate, compact and doctor. */
+export const LEGACY_STORY = "story.md";
 
 export type BankFile = (typeof BANK_FILES)[number];
 
