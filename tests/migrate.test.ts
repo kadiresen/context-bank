@@ -98,8 +98,8 @@ describe("migrateBank 2 -> 3", () => {
     expect(Object.keys(files).sort()).toEqual([
       "0000-00-00-project-inception.md",
       "2026-09-27-task-engine.md",
-      "2026-10-08-undated-decision-2.md",
-      "2026-10-08-undated-decision.md",
+      "2026-09-27-undated-decision-2.md",
+      "2026-09-27-undated-decision.md",
     ]);
     expect(await fs.pathExists(path.join(root, ".ai/story.md"))).toBe(false);
     const all = Object.values(files).join("\n");
@@ -113,6 +113,8 @@ describe("migrateBank 2 -> 3", () => {
     expect(res.changed).toContain(".ai/story.md");
     expect(res.changed).toContain(".ai/story/2026-09-27-task-engine.md");
     expect(res.notes.join("\n")).toContain("4 decisions");
+    expect(res.removed).toEqual([".ai/story.md"]);
+    expect(res.notes.join("\n")).toMatch(/2 decisions had no date[\s\S]*2026-09-27-undated-decision\.md/);
 
     const rules = await fs.readFile(path.join(root, ".ai/rules.md"), "utf-8");
     expect(rules).toContain(".ai/story/");
@@ -120,6 +122,39 @@ describe("migrateBank 2 -> 3", () => {
     expect(await fs.readFile(path.join(root, "AGENTS.md"), "utf-8")).toBe(V3_AGENTS_MD);
     expect(await fs.readFile(path.join(root, "CLAUDE.md"), "utf-8")).toContain("@AGENTS.md");
     expect(await bankVersion(root)).toBe(3);
+  });
+
+  it("dates an undated entry by its nearest dated neighbour, never by the migration day", async () => {
+    const root = await tmpDir();
+    await writeAi(root, {
+      "AGENTS.md": V2_AGENTS_MD,
+      ".ai/rules.md": `# Rules\n\n${V2_RULES_PROTOCOL}`,
+      ".ai/story.md":
+        "# Story\n\n### [Date] - Phase 1: Initialization\n- structure\n\n### 2026-06-05 - Scaffold\n- apps\n\n### 2026-06-08 - Rename\n- peyk\n\n### Follow-up without date\n- more\n",
+    });
+    await migrateBank(root, { date: "2026-10-08" });
+    const files = Object.keys(await readStory(root)).sort();
+    expect(files).toEqual([
+      "2026-06-05-date-phase-1-initialization.md",
+      "2026-06-05-scaffold.md",
+      "2026-06-08-follow-up-without-date.md",
+      "2026-06-08-rename.md",
+    ]);
+    expect(files.some((f) => f.startsWith("2026-10-08"))).toBe(false);
+  });
+
+  it("uses 0000-00-00 when a story has no dated entry at all", async () => {
+    const root = await tmpDir();
+    await writeAi(root, {
+      "AGENTS.md": V2_AGENTS_MD,
+      ".ai/rules.md": `# Rules\n\n${V2_RULES_PROTOCOL}`,
+      ".ai/story.md": "# Story\n\n### First call\n- a\n\n### Second call\n- b\n",
+    });
+    await migrateBank(root, { date: "2026-10-08" });
+    expect(Object.keys(await readStory(root)).sort()).toEqual([
+      "0000-00-00-first-call.md",
+      "0000-00-00-second-call.md",
+    ]);
   });
 
   it("parses 'DATE: Title' headings and creates no inception for banner-only preamble", async () => {
@@ -373,9 +408,9 @@ describe("migrateBank 2 -> 3: ## story files and owned pointers", () => {
     const files = await readStory(root);
     expect(Object.keys(files).sort()).toEqual([
       "0000-00-00-project-inception.md",
+      "2026-06-17-no-date-here.md",
       "2026-06-17-opencode-support.md",
       "2026-08-31-v2-shipped.md",
-      "2026-10-08-no-date-here.md",
     ]);
     expect(files["2026-08-31-v2-shipped.md"]).toContain("Date: 2026-08-31");
     const inception = files["0000-00-00-project-inception.md"]!;

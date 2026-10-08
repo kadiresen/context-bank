@@ -151,8 +151,9 @@ function stripContextBankGitattributes(text: string): string {
 export async function migrateBank(
   root: string,
   options: MigrateOptions = {},
-): Promise<{ changed: string[]; notes: string[] }> {
+): Promise<{ changed: string[]; removed: string[]; notes: string[] }> {
   const changed: string[] = [];
+  const removed: string[] = [];
   const notes: string[] = [];
 
   const day = options.date ?? new Date().toISOString().split("T")[0]!;
@@ -263,9 +264,16 @@ export async function migrateBank(
 
   const story = await migrateStoryToV3(root, { date: day });
   changed.push(...story.created, ...story.removed);
+  removed.push(...story.removed);
   if (story.created.length > 0) {
     notes.push(
       `Created ${story.created.length} ${story.created.length === 1 ? "decision" : "decisions"} in .ai/story/ from story.md and archived story files.`,
+    );
+  }
+  if (story.undated.length > 0) {
+    const n = story.undated.length;
+    notes.push(
+      `${n} ${n === 1 ? "decision had" : "decisions had"} no date in the heading and took the nearest dated entry's date; check: ${story.undated.join(", ")}`,
     );
   }
   const storyDir = path.join(root, ".ai/story");
@@ -307,5 +315,5 @@ export async function migrateBank(
     changed.push(...compact.changed);
   }
 
-  return { changed: [...new Set(changed)], notes };
+  return { changed: [...new Set(changed)], removed: [...new Set(removed)], notes };
 }

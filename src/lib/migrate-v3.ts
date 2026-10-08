@@ -133,7 +133,7 @@ async function findPlaceholders(root: string): Promise<string[]> {
 export async function migrateStoryToV3(
   root: string,
   opts: { date: string },
-): Promise<{ created: string[]; removed: string[] }> {
+): Promise<{ created: string[]; removed: string[]; undated: string[] }> {
   const cap = CAPS["decision"]!;
   const sources: { rel: string; kind: "story" | "archive"; fallbackDate: string }[] = [];
 
@@ -157,6 +157,7 @@ export async function migrateStoryToV3(
 
   const created: string[] = [];
   const removed: string[] = [];
+  const undated: string[] = [];
   const expected: { rel: string; body: string }[] = [];
 
   const put = async (title: string, body: string, date: string) => {
@@ -189,8 +190,18 @@ export async function migrateStoryToV3(
         await put("Archived story notes", rest, src.fallbackDate);
       }
     }
-    for (const s of sections) {
-      await put(s.title, s.body, s.date ?? src.fallbackDate);
+    // An undated heading takes its nearest dated neighbour's date (stories run in either
+    // order), never the migration day, so it does not sort as the newest decision.
+    const noNeighbour = src.kind === "story" ? INCEPTION_DATE : src.fallbackDate;
+    const dateAt = (i: number): string => {
+      for (let j = i - 1; j >= 0; j--) if (sections[j]!.date) return sections[j]!.date!;
+      for (let j = i + 1; j < sections.length; j++) if (sections[j]!.date) return sections[j]!.date!;
+      return noNeighbour;
+    };
+    for (const [i, s] of sections.entries()) {
+      const before = created.length;
+      await put(s.title, s.body, s.date ?? dateAt(i));
+      if (!s.date) undated.push(...created.slice(before));
     }
   }
 
@@ -218,5 +229,5 @@ export async function migrateStoryToV3(
       removed.push(p);
     }
   }
-  return { created, removed };
+  return { created, removed, undated };
 }

@@ -28,8 +28,12 @@ export async function migrateCommand(
     console.log(chalk.green("Already on v3."));
     return;
   }
+  const removed = new Set(result.removed);
   for (const file of result.changed) {
-    console.log(chalk.cyan(`updated  ${file}`));
+    if (!removed.has(file)) console.log(chalk.cyan(`updated  ${file}`));
+  }
+  for (const file of result.removed) {
+    console.log(chalk.gray(`removed  ${file}`));
   }
   for (const note of result.notes) {
     console.log(chalk.yellow(`note     ${note}`));
