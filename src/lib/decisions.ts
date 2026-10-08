@@ -1,7 +1,7 @@
 import path from "node:path";
 import fs from "fs-extra";
 import { CAPS } from "./contract.js";
-import { assertNoSymlinkPath, hasSymlinkInPath } from "./scan.js";
+import { assertNoSymlinkPath, leavesRoot } from "./scan.js";
 
 export type Decision = { path: string; date: string; title: string };
 
@@ -71,11 +71,11 @@ export async function addDecision(
 type Raw = Decision & { text: string; name: string };
 
 async function readAll(root: string): Promise<Raw[]> {
-  if (await hasSymlinkInPath(root, STORY_DIR)) return [];
+  if (await leavesRoot(root, STORY_DIR)) return [];
   const dir = path.join(root, STORY_DIR);
   let dirStat;
   try {
-    dirStat = await fs.lstat(dir);
+    dirStat = await fs.stat(dir);
   } catch {
     return [];
   }

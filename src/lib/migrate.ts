@@ -9,14 +9,16 @@ import {
   V3_AGENTS_MD,
   V3_CLAUDE_MD,
   V3_RULES_PROTOCOL,
+  hasCurrentContract,
   isLegacyContract,
 } from "./contract.js";
-import { CLINE_ARCHIVE, hasClineBank, importClineBank } from "./cline.js";
+import { CLINE_ARCHIVE, findClineContracts, hasClineBank, importClineBank } from "./cline.js";
 import { compactBank } from "./compact.js";
 import { defaultTemplateDir } from "./init-bank.js";
 import { migrateStoryToV3 } from "./migrate-v3.js";
 import {
   BANK_FILES,
+  LEGACY_STORY,
   agentsPath,
   assertNoSymlinkPath,
   readIfExists,
@@ -88,6 +90,7 @@ function migrateContract(
   if (text.includes(crlf(v2Trim))) {
     return { text: text.replace(crlf(v2Trim), () => crlf(v3Trim)) };
   }
+  if (hasCurrentContract(text)) return { text };
   if (isLegacyContract(text)) return { text: v3, replaced: true };
   if (!hasStoryRef || !text.includes("Context Bank") || !/story\.md/.test(text)) {
     return { text };
@@ -156,8 +159,8 @@ export async function migrateBank(
 
   const write = async (rel: string, body: string) => {
     const full = body.endsWith("\n") ? body : `${body}\n`;
-    const st = await fs.lstat(path.join(root, rel)).catch(() => null);
-    if (st !== null && !st.isFile() && !st.isSymbolicLink()) {
+    const st = await fs.stat(path.join(root, rel)).catch(() => null);
+    if (st !== null && !st.isFile()) {
       notes.push(`${rel} is not a regular file; left as is`);
       return;
     }
@@ -195,10 +198,28 @@ export async function migrateBank(
     await write(rel, r.text);
   };
 
-  if (
-    (await hasClineBank(root)) &&
-    !(await fs.pathExists(path.join(root, CLINE_ARCHIVE)))
-  ) {
+  // Pre-flight: refuse before writing anything if a fixed target leaves the repo.
+  const importCline =
+    (await hasClineBank(root)) && !(await fs.pathExists(path.join(root, CLINE_ARCHIVE)));
+  const targets = new Set([
+    "AGENTS.md",
+    "CLAUDE.md",
+    ".ai",
+    ".ai/story",
+    ".ai/archive",
+    ".gitattributes",
+    ...BANK_FILES.map((name) => `.ai/${name}`),
+    `.ai/${LEGACY_STORY}`,
+    ...OWNED_POINTER_FILES,
+    ...POINTER_FILES,
+  ]);
+  if (importCline) {
+    targets.add(CLINE_ARCHIVE);
+    for (const { rel } of await findClineContracts(root)) targets.add(rel);
+  }
+  for (const rel of targets) await assertNoSymlinkPath(root, rel);
+
+  if (importCline) {
     const cline = await importClineBank(root, { date: day });
     changed.push(...cline.changed);
     notes.push(...cline.notes);

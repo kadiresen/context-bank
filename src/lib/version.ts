@@ -1,7 +1,7 @@
 import path from "node:path";
 import fs from "fs-extra";
 import { hasContextBankMarker, isLegacyContract } from "./contract.js";
-import { hasSymlinkInPath, readIfExists, readInRoot } from "./scan.js";
+import { leavesRoot, readIfExists, readInRoot } from "./scan.js";
 
 export type BankVersion = 1 | 2 | 3;
 
@@ -12,9 +12,9 @@ export async function bankVersion(root: string): Promise<BankVersion | null> {
     const agents = await readIfExists(path.join(root, "AGENTS.md"));
     return agents !== null && hasContextBankMarker(agents) && isLegacyContract(agents) ? 1 : null;
   }
-  const storyStat = (await hasSymlinkInPath(root, ".ai/story"))
+  const storyStat = (await leavesRoot(root, ".ai/story"))
     ? null
-    : await fs.lstat(path.join(root, ".ai", "story")).catch(() => null);
+    : await fs.stat(path.join(root, ".ai", "story")).catch(() => null);
   const hasStoryDir = storyStat?.isDirectory() === true;
   const hasStoryFile = (await readInRoot(root, ".ai/story.md")) !== null;
   return hasStoryDir && !hasStoryFile ? 3 : 2;

@@ -2,7 +2,7 @@ import path from "node:path";
 import fs from "fs-extra";
 import { CAPS, V2_STORY_BANNER } from "./contract.js";
 import { STORY_DIR, addDecision, decisionOverhead } from "./decisions.js";
-import { LEGACY_STORY, assertNoSymlinkPath, hasSymlinkInPath } from "./scan.js";
+import { LEGACY_STORY, assertNoSymlinkPath, leavesRoot } from "./scan.js";
 
 const INCEPTION_DATE = "0000-00-00";
 
@@ -105,15 +105,15 @@ function parseSections(content: string): { preamble: string; sections: Section[]
 }
 
 async function isRegularFile(root: string, rel: string): Promise<boolean> {
-  if (await hasSymlinkInPath(root, rel)) return false;
-  const st = await fs.lstat(path.join(root, rel)).catch(() => null);
+  if (await leavesRoot(root, rel)) return false;
+  const st = await fs.stat(path.join(root, rel)).catch(() => null);
   return st !== null && st.isFile();
 }
 
 async function findPlaceholders(root: string): Promise<string[]> {
-  if (await hasSymlinkInPath(root, STORY_DIR)) return [];
+  if (await leavesRoot(root, STORY_DIR)) return [];
   const dir = path.join(root, STORY_DIR);
-  const st = await fs.lstat(dir).catch(() => null);
+  const st = await fs.stat(dir).catch(() => null);
   if (!st || !st.isDirectory()) return [];
   const found: string[] = [];
   for (const name of await fs.readdir(dir)) {
@@ -138,9 +138,9 @@ export async function migrateStoryToV3(
   const sources: { rel: string; kind: "story" | "archive"; fallbackDate: string }[] = [];
 
   const archiveDir = path.join(root, ".ai/archive");
-  const archSt = (await hasSymlinkInPath(root, ".ai/archive"))
+  const archSt = (await leavesRoot(root, ".ai/archive"))
     ? null
-    : await fs.lstat(archiveDir).catch(() => null);
+    : await fs.stat(archiveDir).catch(() => null);
   if (archSt?.isDirectory()) {
     for (const name of (await fs.readdir(archiveDir)).sort()) {
       if (!/^story-.*\.md$/.test(name)) continue;

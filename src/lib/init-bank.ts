@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import fs from "fs-extra";
 import { V3_AGENTS_MD, V3_CLAUDE_MD } from "./contract.js";
 import { STORY_DIR, addDecision } from "./decisions.js";
-import { assertNoSymlinkPath, hasSymlinkInPath, writeInRoot } from "./scan.js";
+import { assertNoSymlinkPath, leavesRoot, writeInRoot } from "./scan.js";
 
 export type InitOptions = {
   legacyPointers?: boolean;
@@ -49,7 +49,7 @@ export async function initializeBank(
   await copyMissing(path.join(templateDir, ".ai"), targetDir, ".ai");
   const storyDir = path.join(targetDir, STORY_DIR);
   const hasDecision =
-    !(await hasSymlinkInPath(targetDir, STORY_DIR)) &&
+    !(await leavesRoot(targetDir, STORY_DIR)) &&
     (await fs.pathExists(storyDir)) &&
     (await fs.readdir(storyDir)).some((f) => f.endsWith(".md"));
   if (!hasDecision) {
@@ -64,7 +64,7 @@ export async function initializeBank(
   const readmePath = path.join(targetDir, "README.md");
   const marker = "<!-- AI-CONTEXT: .ai/rules.md -->";
   // The marker is optional: a symlinked README.md is left alone instead of failing init.
-  if (!(await hasSymlinkInPath(targetDir, "README.md")) && (await fs.pathExists(readmePath))) {
+  if (!(await leavesRoot(targetDir, "README.md")) && (await fs.pathExists(readmePath))) {
     const readme = await fs.readFile(readmePath, "utf-8");
     if (!readme.includes(marker)) {
       await writeInRoot(targetDir, "README.md", `${marker}\n${readme}`);

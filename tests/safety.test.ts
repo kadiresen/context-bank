@@ -1,7 +1,7 @@
 import path from "node:path";
 import fs from "fs-extra";
 import { describe, expect, it } from "vitest";
-import { V2_CLAUDE_MD, V3_AGENTS_MD } from "../src/lib/contract.js";
+import { V2_AGENTS_MD, V2_CLAUDE_MD, V3_AGENTS_MD, V3_CLAUDE_MD } from "../src/lib/contract.js";
 import { compactBank } from "../src/lib/compact.js";
 import { addDecision, listDecisions, searchDecisions } from "../src/lib/decisions.js";
 import { diagnose } from "../src/lib/doctor.js";
@@ -15,7 +15,8 @@ async function snapshot(dir: string): Promise<Record<string, string>> {
   const walk = async (d: string) => {
     for (const e of await fs.readdir(d, { withFileTypes: true })) {
       const p = path.join(d, e.name);
-      if (e.isDirectory()) await walk(p);
+      if (e.isSymbolicLink()) out[path.relative(dir, p)] = `link:${await fs.readlink(p)}`;
+      else if (e.isDirectory()) await walk(p);
       else out[path.relative(dir, p)] = await fs.readFile(p, "utf8");
     }
   };
@@ -133,5 +134,123 @@ describe("directories where files are expected", () => {
     const res = await migrateBank(root, { date: "2026-10-08" });
     expect(res.notes.join("\n")).toContain("AGENTS.md is not a regular file");
     expect((await fs.stat(path.join(root, "AGENTS.md"))).isDirectory()).toBe(true);
+  });
+});
+
+describe("in-repo symlinks", () => {
+  it("migrates a v2 bank whose AGENTS.md links to CLAUDE.md", async () => {
+    const root = await tmpDir();
+    await writeAi(root, { "CLAUDE.md": V2_AGENTS_MD, ".ai/rules.md": "# r\n" });
+    await fs.symlink("CLAUDE.md", path.join(root, "AGENTS.md"));
+    await migrateBank(root, { date: "2026-10-08" });
+    expect((await fs.lstat(path.join(root, "AGENTS.md"))).isSymbolicLink()).toBe(true);
+    expect(await fs.readFile(path.join(root, "CLAUDE.md"), "utf8")).toBe(V3_AGENTS_MD);
+  });
+
+  it("init and migrate work with .ai linked to an in-repo folder", async () => {
+    const root = await tmpDir();
+    await fs.ensureDir(path.join(root, "memory"));
+    await fs.symlink("memory", path.join(root, ".ai"));
+    await initializeBank(root);
+    expect(await fs.pathExists(path.join(root, "memory/rules.md"))).toBe(true);
+    expect((await listDecisions(root)).length).toBe(1);
+    await writeAi(root, { "memory/story.md": "# Story\n\n### 2026-01-01 - Pick db\npg\n" });
+    await migrateBank(root, { date: "2026-10-08" });
+    expect(await fs.pathExists(path.join(root, "memory/story/2026-01-01-pick-db.md"))).toBe(true);
+    expect(await bankVersion(root)).toBe(3);
+  });
+
+  it("still refuses a link outside the root and a dangling link", async () => {
+    const outside = await tmpDir();
+    const r1 = await tmpDir();
+    await fs.symlink(outside, path.join(r1, ".ai"));
+    await expect(addDecision(r1, { title: "X", body: "b" })).rejects.toThrow("refusing to follow a symlink");
+    const r2 = await tmpDir();
+    await fs.symlink("missing-dir", path.join(r2, ".ai"));
+    await expect(addDecision(r2, { title: "X", body: "b" })).rejects.toThrow("refusing to follow a symlink");
+    expect(await fs.pathExists(path.join(r2, "missing-dir"))).toBe(false);
+    expect(await fs.readdir(outside)).toEqual([]);
+  });
+});
+
+describe("migrate pre-flight", () => {
+  it("throws before writing anything when a target links outside the root", async () => {
+    const outside = await tmpDir();
+    await writeAi(outside, { "AGENTS.md": V2_AGENTS_MD });
+    const root = await tmpDir();
+    await writeAi(root, {
+      "memory-bank/projectbrief.md": "# Brief\nbuild it\n",
+      "memory-bank/activeContext.md": "# Active\nnow\n",
+      "CLAUDE.md": V2_CLAUDE_MD,
+    });
+    await fs.symlink(path.join(outside, "AGENTS.md"), path.join(root, "AGENTS.md"));
+    const before = await snapshot(root);
+    const outsideBefore = await snapshot(outside);
+    await expect(migrateBank(root, { date: "2026-10-08" })).rejects.toThrow("refusing to follow a symlink: AGENTS.md");
+    expect(await snapshot(root)).toEqual(before);
+    expect(await snapshot(outside)).toEqual(outsideBefore);
+  });
+});
+
+describe("current contract is never legacy", () => {
+  it("keeps a V3 AGENTS.md with v1-like user wording untouched", async () => {
+    const root = await tmpDir();
+    const agents = `${V3_AGENTS_MD}\nAfter every task, run lint, no matter how small. Every change matters.\n\n## Team\nAli reviews.\n`;
+    await writeAi(root, { "AGENTS.md": agents, "CLAUDE.md": V3_CLAUDE_MD, ".ai/rules.md": "# r\n", ".ai/story/.gitkeep": "" });
+    expect((await diagnose(root)).findings.map((f) => f.code)).not.toContain("legacy-contract");
+    await migrateBank(root, { date: "2026-10-08" });
+    expect(await fs.readFile(path.join(root, "AGENTS.md"), "utf8")).toBe(agents);
+    expect(await bankVersion(root)).toBe(3);
+    const r2 = await tmpDir();
+    await writeAi(r2, { "AGENTS.md": agents });
+    expect(await bankVersion(r2)).toBeNull();
+  });
+});
+
+describe("migrate pre-flight covers Cline import targets", () => {
+  it("leaves the tree byte-identical when a Cline target is a dangling link", async () => {
+    const root = await tmpDir();
+    await writeAi(root, {
+      "memory-bank/projectbrief.md": "# Brief\nbuild it\n",
+      "memory-bank/activeContext.md": "# Active\nnow\n",
+    });
+    await fs.ensureDir(path.join(root, ".ai"));
+    await fs.symlink("missing.md", path.join(root, ".ai/active-context.md"));
+    const before = await snapshot(root);
+    await expect(migrateBank(root, { date: "2026-10-08" })).rejects.toThrow(
+      "refusing to follow a symlink: .ai/active-context.md",
+    );
+    expect(await snapshot(root)).toEqual(before);
+  });
+});
+
+describe(".git is outside the repo for the guard", () => {
+  async function gitRepo() {
+    const root = await tmpDir();
+    await writeAi(root, { ".git/config": "[core]\n", ".git/hooks/pre-commit": "#!/bin/sh\n" });
+    return root;
+  }
+
+  it("init does not write into .git through a README.md link", async () => {
+    const root = await gitRepo();
+    await fs.symlink(".git/config", path.join(root, "README.md"));
+    await initializeBank(root).catch(() => undefined);
+    expect(await fs.readFile(path.join(root, ".git/config"), "utf8")).toBe("[core]\n");
+  });
+
+  it("migrate refuses an AGENTS.md link into .git/hooks", async () => {
+    const root = await gitRepo();
+    await writeAi(root, { ".ai/rules.md": "# r\n" });
+    await fs.writeFile(path.join(root, ".git/hooks/pre-commit"), V2_AGENTS_MD);
+    await fs.symlink(".git/hooks/pre-commit", path.join(root, "AGENTS.md"));
+    await expect(migrateBank(root, { date: "2026-10-08" })).rejects.toThrow("refusing to follow a symlink: AGENTS.md");
+    expect(await fs.readFile(path.join(root, ".git/hooks/pre-commit"), "utf8")).toBe(V2_AGENTS_MD);
+  });
+
+  it("init does not create a file in .git through a dangling-into-.git AGENTS.md link", async () => {
+    const root = await gitRepo();
+    await fs.symlink(".git/hooks/post-checkout", path.join(root, "AGENTS.md"));
+    await initializeBank(root).catch(() => undefined);
+    expect(await fs.pathExists(path.join(root, ".git/hooks/post-checkout"))).toBe(false);
   });
 });

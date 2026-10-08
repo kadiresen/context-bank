@@ -28,31 +28,46 @@ function components(rel: string): string[] {
   return parts;
 }
 
-/** True when any existing component of `rel` under `root` is a symlink (dangling ones included). */
-export async function hasSymlinkInPath(root: string, rel: string): Promise<boolean> {
+function isInside(real: string, realRoot: string): boolean {
+  const git = path.join(realRoot, ".git");
+  if (real === git || real.startsWith(`${git}${path.sep}`)) return false;
+  return real === realRoot || real.startsWith(`${realRoot}${path.sep}`);
+}
+
+/**
+ * True when `rel` under `root` would leave the repo: some existing path component is a
+ * symlink that is dangling or whose real path lies outside the real root or inside its
+ * `.git` (config, hooks). Symlinks that resolve inside the repo (e.g.
+ * `AGENTS.md -> CLAUDE.md`) are fine.
+ */
+export async function leavesRoot(root: string, rel: string): Promise<boolean> {
+  const parts = components(rel);
+  const realRoot = await fs.realpath(root).catch(() => path.resolve(root));
   let cur = root;
-  for (const part of components(rel)) {
+  for (const part of parts) {
     cur = path.join(cur, part);
     const st = await fs.lstat(cur).catch(() => null);
     if (st === null) return false;
-    if (st.isSymbolicLink()) return true;
+    if (!st.isSymbolicLink()) continue;
+    const real = await fs.realpath(cur).catch(() => null);
+    if (real === null || !isInside(real, realRoot)) return true;
   }
   return false;
 }
 
 /**
- * Call right before writing `rel` under `root`: throws when any path component is a
- * symlink, so a hostile repo cannot redirect writes outside its root.
+ * Call right before writing `rel` under `root`: throws when a symlinked path component is
+ * dangling or resolves outside the repo, so a hostile repo cannot redirect writes.
  */
 export async function assertNoSymlinkPath(root: string, rel: string): Promise<void> {
-  if (await hasSymlinkInPath(root, rel)) {
+  if (await leavesRoot(root, rel)) {
     throw new Error(`refusing to follow a symlink: ${rel}`);
   }
 }
 
-/** Read-side guard: a symlinked path (or a non-file) reads as absent. */
+/** Read-side guard: a path that leaves the repo through a symlink (or a non-file) reads as absent. */
 export async function readInRoot(root: string, rel: string): Promise<string | null> {
-  if (await hasSymlinkInPath(root, rel)) return null;
+  if (await leavesRoot(root, rel)) return null;
   return readIfExists(path.join(root, rel));
 }
 

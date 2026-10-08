@@ -8,7 +8,7 @@ import {
   LEGACY_STORY,
   aiPath,
   agentsPath,
-  hasSymlinkInPath,
+  leavesRoot,
   readIfExists,
   readInRoot,
 } from "./scan.js";
@@ -99,9 +99,9 @@ export async function diagnose(root: string): Promise<Report> {
   }
 
   const storyDir = path.join(root, STORY_DIR);
-  const storyStat = (await hasSymlinkInPath(root, STORY_DIR))
+  const storyStat = (await leavesRoot(root, STORY_DIR))
     ? null
-    : await fs.lstat(storyDir).catch(() => null);
+    : await fs.stat(storyDir).catch(() => null);
   if (storyStat?.isDirectory()) {
     const cap = CAPS["decision"]!;
     const entries = await fs.readdir(storyDir, { withFileTypes: true });

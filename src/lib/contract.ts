@@ -91,16 +91,24 @@ export function hasContextBankMarker(text: string): boolean {
   return text.includes("Context Bank") || text.includes(".ai/");
 }
 
+/** True when the text carries the full V2 or V3 AGENTS.md / CLAUDE.md contract. */
+export function hasCurrentContract(text: string): boolean {
+  const lf = text.replace(/\r\n/g, "\n");
+  return [V2_AGENTS_MD, V3_AGENTS_MD, V2_CLAUDE_MD, V3_CLAUDE_MD].some((c) => lf.includes(c.trimEnd()));
+}
+
 /**
  * Detects the context-bank v1 "update every file after every task" contract. A single
  * phrase such as "no matter how small" is ordinary wording, so the broad patterns
  * only count when at least two appear together next to a Context Bank marker. A file
- * that context-bank generated and owns (`ownedFile`) is its own marker.
+ * that context-bank generated and owns (`ownedFile`) is its own marker. A file that
+ * already carries the V2 or V3 contract is never legacy, whatever else it says.
  */
 export function isLegacyContract(
   text: string,
   opts: { ownedFile?: boolean } = {},
 ): boolean {
+  if (hasCurrentContract(text)) return false;
   if (V1_SIGNATURES.some((re) => re.test(text))) return true;
   const hits = LEGACY_PATTERNS.filter((re) => re.test(text)).length;
   return hits >= 2 && (opts.ownedFile === true || hasContextBankMarker(text));
