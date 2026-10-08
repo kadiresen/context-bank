@@ -45,6 +45,7 @@ export const CAPS: Record<string, number> = {
   "architecture.md": 40_000,
   "roadmap.md": 20_000,
   "story.md": 30_000,
+  decision: 4_000,
 };
 
 export const LEGACY_PATTERNS: RegExp[] = [

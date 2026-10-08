@@ -11,3 +11,11 @@ export type { BankVersion } from "./version.js";
 export { CAPS } from "./contract.js";
 export { BANK_FILES } from "./scan.js";
 export type { BankFile } from "./scan.js";
+export {
+  STORY_DIR,
+  decisionSlug,
+  addDecision,
+  listDecisions,
+  searchDecisions,
+} from "./decisions.js";
+export type { Decision } from "./decisions.js";
