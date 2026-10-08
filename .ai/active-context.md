@@ -3,7 +3,7 @@
 Current work only. Keep this file under ~80 lines. Older notes belong in `.ai/archive/` or git, not here.
 
 ## Current Focus
-- v3.0.0 is published (2026-10-08), 3.0.1 patch ready: one file per decision in `.ai/story/`, library export, `migrate` for 1.x/2.x banks, plugin pinned to 3.0.0. Plugin submitted to Anthropic's directory on 2026-10-08 (review pending; push-update webhook to set up).
+- v3.0.1 is published (2026-10-08; 3.0.0 earlier the same day), 3.0.2 patch ready: one file per decision in `.ai/story/`, library export, `migrate` for 1.x/2.x banks, plugin pinned to 3.0.2. Plugin submitted to Anthropic's directory on 2026-10-08 (review pending; push-update webhook to set up).
 - Growth plan (`docs/growth-plan.md`): Workstreams 1-3 done; Workstream 4 (launch) drafts in `docs/launch/`, refreshed for v3 on 2026-10-08 (numbers re-measured with 3.0.0 on the 2026-09-26 snapshots; demo SVG/MP4 regenerated) (article, Show HN, Reddit, X thread, demo MP4). The user publishes them; nothing is posted by the agent.
 - Token numbers: always compare the same files on both sides (v1 read `rules` + `active-context` + `roadmap`: ~241k -> ~5k on the largest bank). Do not reuse the old "435k -> 2k" figure.
 
