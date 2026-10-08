@@ -13,6 +13,7 @@ import {
 } from "./contract.js";
 import { CLINE_ARCHIVE, hasClineBank, importClineBank } from "./cline.js";
 import { compactBank } from "./compact.js";
+import { defaultTemplateDir } from "./init-bank.js";
 import { migrateStoryToV3 } from "./migrate-v3.js";
 import { BANK_FILES, aiPath, agentsPath, readIfExists } from "./scan.js";
 
@@ -115,6 +116,9 @@ const POINTER_FILES = [
   ".github/copilot-instructions.md",
 ];
 
+// Files generated and owned by context-bank: a legacy v1 copy is replaced wholesale.
+const OWNED_POINTER_FILES = [".cursor/rules/context-bank.mdc", ".windsurf/rules/context-bank.md"];
+
 function stripContextBankGitattributes(text: string): string {
   const withoutBlock = text.replace(
     /# Context Bank: branch-aware merge strategies[\s\S]*?(?:\n\.ai\/story\.md merge=union)?\n?/,
@@ -208,6 +212,23 @@ export async function migrateBank(
     await fs.ensureDir(storyDir);
     await fs.writeFile(path.join(storyDir, ".gitkeep"), "");
     changed.push(".ai/story/.gitkeep");
+  }
+
+  for (const rel of OWNED_POINTER_FILES) {
+    const text = await readIfExists(path.join(root, rel));
+    if (text === null || !isLegacyContract(text)) continue;
+    const tpl = await readIfExists(path.join(defaultTemplateDir(), rel));
+    if (tpl === null) continue;
+    const day = options.date ?? new Date().toISOString().split("T")[0]!;
+    const base = path.basename(rel).replace(/\.[^.]+$/, "");
+    let archiveRel = `.ai/archive/${base}-${day}.md`;
+    for (let n = 2; await fs.pathExists(path.join(root, archiveRel)); n++) {
+      archiveRel = `.ai/archive/${base}-${day}-${n}.md`;
+    }
+    await fs.ensureDir(path.join(root, ".ai/archive"));
+    await fs.writeFile(path.join(root, archiveRel), text);
+    changed.push(archiveRel);
+    await write(rel, tpl);
   }
 
   for (const rel of POINTER_FILES) {

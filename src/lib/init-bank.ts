@@ -9,7 +9,7 @@ export type InitOptions = {
   templateDir?: string;
 };
 
-function defaultTemplateDir(): string {
+export function defaultTemplateDir(): string {
   const here = path.dirname(fileURLToPath(import.meta.url));
   return path.resolve(here, "../../templates");
 }

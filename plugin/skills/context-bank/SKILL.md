@@ -1,6 +1,6 @@
 ---
 name: context-bank
-description: Read and maintain a Context Bank (.ai/ folder with rules.md, active-context.md, roadmap.md, architecture.md, story.md, referenced from AGENTS.md). Use when a project has an .ai/ directory or its AGENTS.md mentions Context Bank, when resuming work, planning, recording a decision, or when the user asks to update project memory or context.
+description: Read and maintain a Context Bank (.ai/ folder with rules.md, active-context.md, roadmap.md, architecture.md, story/ decisions, referenced from AGENTS.md). Use when a project has an .ai/ directory or its AGENTS.md mentions Context Bank, when resuming work, planning, recording a decision, or when the user asks to update project memory or context.
 license: MIT
 metadata:
   author: kadiresen
@@ -19,7 +19,7 @@ The project keeps its AI memory in `.ai/`, committed to git and shared by the te
 | `.ai/active-context.md` | When resuming work. Current focus only. | 8k chars, ~80 lines |
 | `.ai/roadmap.md` | When planning or picking the next task. | 20k chars |
 | `.ai/architecture.md` | When the structure of the system matters for the task. | 40k chars |
-| `.ai/story.md` | Never preload. Search it (grep) when you need a past decision. | 30k chars |
+| `.ai/story/` | Never preload. One file per decision. Search it (grep) when you need a past decision. | 4k chars per decision |
 | `.ai/archive/` | Never preload. Search it only when the live files point there. | none |
 
 Do not read every file "to be safe". Pick the ones the task needs.
@@ -31,7 +31,7 @@ Do not touch every context file on each change. Git already records what changed
 - `active-context.md`: update when the current focus or next steps changed. Replace stale lines; do not append a log.
 - `roadmap.md`: tick or add items when open work changed. Move long completed lists to `.ai/archive/`.
 - `architecture.md`: update only when the structure actually changed. Describe the current shape, not the history.
-- `story.md`: append only for a decision a future agent cannot recover from git or the code (why an option was rejected, a constraint from outside the repo). A few lines per entry, headed `### YYYY-MM-DD - Title`.
+- `.ai/story/`: add a new decision file only for a decision a future agent cannot recover from git or the code (why an option was rejected, a constraint from outside the repo). One decision per file, named `YYYY-MM-DD-slug.md`, a few lines, headed `# Title` then `Date: YYYY-MM-DD`. Never edit old decision files.
 - `rules.md`: add a convention only when the user states one. Keep it small.
 
 ## What never to write
@@ -44,7 +44,7 @@ Do not touch every context file on each change. Git already records what changed
 
 ## Keeping it healthy
 
-- Run `npx -y context-bank@2.1.0 doctor` to check caps, leftover v1 "update after every task" instructions, and stale markers.
-- If a file is over its cap, run `npx -y context-bank@2.1.0 compact --dry-run`, show the user what would move, and compact only with their approval. Overflow is copied to `.ai/archive/`, never deleted.
+- Run `npx -y context-bank@3.0.0 doctor` to check caps, leftover v1 "update after every task" instructions, a single-file v2 story, and stale markers.
+- If a file is over its cap, run `npx -y context-bank@3.0.0 compact --dry-run`, show the user what would move, and compact only with their approval. Overflow is copied to `.ai/archive/`, never deleted.
 - `architecture.md` is never compacted automatically. If it is over the cap, propose a rewrite that keeps only the current shape.
-- A bank still on the v1 contract needs `npx -y context-bank@2.1.0 migrate` (with the user's approval).
+- A bank still on the v1 or v2 layout needs `npx -y context-bank@3.0.0 migrate` (with the user's approval); it moves the v2 single-file story into `.ai/story/`, one file per decision.

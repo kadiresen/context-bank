@@ -62,15 +62,41 @@ function stripPreamble(pre: string, kind: "story" | "archive"): string {
   return out.join("\n").trim();
 }
 
+const TEMPLATE_SECTIONS = /^## (project inception|development log)\s*$/i;
+
 function parseSections(content: string): { preamble: string; sections: Section[] } {
-  const parts = content.split(/(?:^|\n)(?=### )/);
-  const first = parts[0] ?? "";
-  const hasPreamble = !first.startsWith("### ");
-  const preamble = hasPreamble ? first : "";
-  const sections = (hasPreamble ? parts.slice(1) : parts).map((raw) => {
-    const nl = raw.indexOf("\n");
-    const heading = (nl < 0 ? raw : raw.slice(0, nl)).replace(/^### /, "").trim();
-    const body = (nl < 0 ? "" : raw.slice(nl + 1)).replace(/^\s*\n|\s+$/g, "");
+  const all = content.split("\n");
+  const fenced: boolean[] = [];
+  let open = false;
+  for (const l of all) {
+    if (/^\s*(```|~~~)/.test(l)) {
+      fenced.push(true);
+      open = !open;
+    } else fenced.push(open);
+  }
+  const marker = all.some((l, i) => !fenced[i] && l.startsWith("### ")) ? "### " : "## ";
+  const isEntry = (l: string) =>
+    l.startsWith(marker) && !(marker === "## " && TEMPLATE_SECTIONS.test(l));
+  const pre: string[] = [];
+  const raws: string[][] = [];
+  let inPre = true;
+  for (const [i, line] of all.entries()) {
+    if (fenced[i]) {
+      if (inPre) pre.push(line);
+      else raws[raws.length - 1]!.push(line);
+    } else if (isEntry(line)) {
+      raws.push([line]);
+      inPre = false;
+    } else if (marker === "## " && TEMPLATE_SECTIONS.test(line)) {
+      inPre = true;
+      pre.push(line);
+    } else if (inPre) pre.push(line);
+    else raws[raws.length - 1]!.push(line);
+  }
+  const preamble = pre.join("\n");
+  const sections = raws.map((lines) => {
+    const heading = lines[0]!.slice(marker.length).trim();
+    const body = lines.slice(1).join("\n").replace(/^\s*\n|\s+$/g, "");
     const m = /^(\d{4}-\d{2}-\d{2})\s*(?:[-:\u2013\u2014]\s*)?(.*)$/.exec(heading);
     if (m) return { date: m[1]!, title: m[2]!.trim() || "Decision", body };
     return { date: null, title: heading || "Decision", body };
@@ -100,7 +126,7 @@ async function findPlaceholders(root: string): Promise<string[]> {
 
 /**
  * Splits v2 `.ai/story.md` and `.ai/archive/story-*.md` into one decision file per
- * `### ` section. Writes every decision first, verifies, and only then removes sources.
+ * `### ` section (or `## ` when the file has no `### ` heading). Writes every decision first, verifies, and only then removes sources.
  */
 export async function migrateStoryToV3(
   root: string,
@@ -130,7 +156,13 @@ export async function migrateStoryToV3(
   const expected: { rel: string; body: string }[] = [];
 
   const put = async (title: string, body: string, date: string) => {
-    const chunks = chunkBody(body, cap);
+    const overhead = (t: string) => `# ${t}\n\nDate: ${date}\n\n`.length + 1;
+    const plain = title.replace(/\s+/g, " ").trim();
+    const budget =
+      body.length + overhead(plain) <= cap
+        ? cap
+        : Math.max(200, cap - overhead(`${plain} (part 99)`));
+    const chunks = chunkBody(body, budget);
     for (let i = 0; i < chunks.length; i++) {
       const t = chunks.length > 1 ? `${title} (part ${i + 1})` : title;
       const d = await addDecision(root, { title: t, body: chunks[i]!, date });

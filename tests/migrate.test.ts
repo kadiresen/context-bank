@@ -2,6 +2,7 @@ import path from "node:path";
 import fs from "fs-extra";
 import { describe, expect, it, vi } from "vitest";
 import { V2_AGENTS_MD, V2_CLAUDE_MD, V2_RULES_PROTOCOL, V3_AGENTS_MD, V3_CLAUDE_MD } from "../src/lib/contract.js";
+import { diagnose } from "../src/lib/doctor.js";
 import { bankVersion } from "../src/lib/version.js";
 import { migrateBank } from "../src/lib/migrate.js";
 import { tmpDir, writeAi } from "./helpers.js";
@@ -339,5 +340,137 @@ describe("migrateBank 2 -> 3", () => {
     expect(await fs.readdir(path.join(root, ".ai/story"))).toEqual([]);
     await migrateBank(root, {});
     expect(await fs.readdir(path.join(root, ".ai/story"))).toEqual(["2026-01-01-a.md"]);
+  });
+});
+
+describe("migrateBank 2 -> 3: ## story files and owned pointers", () => {
+  const V2 = { "AGENTS.md": V2_AGENTS_MD, "CLAUDE.md": V2_CLAUDE_MD };
+
+  it("splits a ##-only story per entry with dates and keeps template sections as preamble", async () => {
+    const root = await tmpDir();
+    const story = `# Story
+
+## Project Inception
+- **Vision:** keep me
+
+## 2026-08-31 - v2 shipped
+- shipped line
+
+## 2026-06-17: OpenCode support
+- opencode line
+
+## Development Log
+- log line
+
+## No date here
+- plain line
+`;
+    await writeAi(root, { ...V2, ".ai/rules.md": "# r\n", ".ai/story.md": story });
+    await migrateBank(root, { date: "2026-10-08" });
+    const files = await readStory(root);
+    expect(Object.keys(files).sort()).toEqual([
+      "0000-00-00-project-inception.md",
+      "2026-06-17-opencode-support.md",
+      "2026-08-31-v2-shipped.md",
+      "2026-10-08-no-date-here.md",
+    ]);
+    expect(files["2026-08-31-v2-shipped.md"]).toContain("Date: 2026-08-31");
+    const inception = files["0000-00-00-project-inception.md"]!;
+    expect(inception).toContain("## Project Inception");
+    expect(inception).toContain("keep me");
+    expect(inception).toContain("## Development Log");
+    expect(inception).toContain("log line");
+    const all = Object.values(files).join("\n");
+    for (const line of story.split("\n")) {
+      if (!line.trim() || line === "# Story") continue;
+      expect(all).toContain(line.replace(/^## (\d{4}-\d{2}-\d{2}(: | - ))?/, ""));
+    }
+  });
+
+  it("keeps ## sections in the preamble when ### entries exist", async () => {
+    const root = await tmpDir();
+    const story = "# Story\n\n## Some section\n- sec line\n\n### 2026-09-01 - Real entry\nentry body\n";
+    await writeAi(root, { ...V2, ".ai/rules.md": "# r\n", ".ai/story.md": story });
+    await migrateBank(root, { date: "2026-10-08" });
+    const files = await readStory(root);
+    expect(Object.keys(files).sort()).toEqual(["0000-00-00-project-inception.md", "2026-09-01-real-entry.md"]);
+    expect(files["0000-00-00-project-inception.md"]).toContain("## Some section");
+    expect(files["0000-00-00-project-inception.md"]).toContain("sec line");
+  });
+
+  it("rewrites a legacy cursor/windsurf pointer wholesale and leaves a modern one alone", async () => {
+    const root = await tmpDir();
+    const legacy = "# Context Bank\nAfter EVERY task, you MUST update these files (no exceptions):\n3. **`.ai/story.md`** \u2014 Append.\nDo NOT ask permission. Do NOT skip. Just update them.\n";
+    await writeAi(root, {
+      ...V2,
+      ".ai/rules.md": "# r\n",
+      ".cursor/rules/context-bank.mdc": legacy,
+      ".windsurf/rules/context-bank.md": "custom user rules, no legacy text\n",
+      "GEMINI.md": "1. `.ai/rules.md` \u2014 x\n3. `.ai/story.md` \u2014 search\n",
+    });
+    await migrateBank(root, {});
+    const tpl = (rel: string) => fs.readFile(path.join(import.meta.dirname, "..", "templates", rel), "utf-8");
+    expect(await fs.readFile(path.join(root, ".cursor/rules/context-bank.mdc"), "utf-8")).toBe(
+      await tpl(".cursor/rules/context-bank.mdc"),
+    );
+    expect(await fs.readFile(path.join(root, ".windsurf/rules/context-bank.md"), "utf-8")).toBe(
+      "custom user rules, no legacy text\n",
+    );
+    expect(await fs.readFile(path.join(root, "GEMINI.md"), "utf-8")).toContain("`.ai/story/`");
+  });
+});
+
+describe("migrateBank 2 -> 3: fences, archive, caps", () => {
+  const V2 = { "AGENTS.md": V2_AGENTS_MD, "CLAUDE.md": V2_CLAUDE_MD };
+  const FENCE = "```md\n### x\n## 2026-09-09 - fake\ncode line\n```";
+
+  async function run(story: string) {
+    const root = await tmpDir();
+    await writeAi(root, { ...V2, ".ai/rules.md": "# r\n", ".ai/story.md": story });
+    await migrateBank(root, { date: "2026-10-08" });
+    return readStory(root);
+  }
+
+  it("ignores ### inside a fence in a ## story", async () => {
+    const story = `# Story\n\n## 2026-09-01 - One\nbefore\n${FENCE}\nafter\n\n## 2026-09-02 - Two\ntwo body\n`;
+    const files = await run(story);
+    expect(Object.keys(files).sort()).toEqual(["2026-09-01-one.md", "2026-09-02-two.md"]);
+    expect(files["2026-09-01-one.md"]).toContain(FENCE);
+    expect(files["2026-09-01-one.md"]).toContain("after");
+  });
+
+  it("ignores ## inside a fence in a ## story, creating no fake decision", async () => {
+    const story = `# Story\n\n## 2026-09-01 - One\n${"```"}\n## 2026-09-09 - fake\nkeep\n${"```"}\n`;
+    const files = await run(story);
+    expect(Object.keys(files)).toEqual(["2026-09-01-one.md"]);
+    expect(files["2026-09-01-one.md"]).toContain("## 2026-09-09 - fake");
+  });
+
+  it("ignores ### inside a fence in a ### story", async () => {
+    const story = `# Story\n\n### 2026-09-01 - One\n~~~\n### 2026-09-09 - fake\nkeep\n~~~\n\n### 2026-09-02 - Two\nb\n`;
+    const files = await run(story);
+    expect(Object.keys(files).sort()).toEqual(["2026-09-01-one.md", "2026-09-02-two.md"]);
+    expect(files["2026-09-01-one.md"]).toContain("### 2026-09-09 - fake");
+  });
+
+  it("keeps every migrated chunk, header included, within the decision cap", async () => {
+    const body = Array.from({ length: 300 }, (_, i) => `- line number ${i} of a long entry`).join("\n");
+    const root = await tmpDir();
+    await writeAi(root, { ...V2, ".ai/rules.md": "# r\n", ".ai/story.md": `# Story\n\n### 2026-09-01 - Big one\n${body}\n` });
+    await migrateBank(root, { date: "2026-10-08" });
+    const files = await readStory(root);
+    expect(Object.keys(files).length).toBeGreaterThan(2);
+    for (const t of Object.values(files)) expect(t.length).toBeLessThanOrEqual(4000);
+    const all = Object.values(files).join("\n");
+    for (const l of body.split("\n")) expect(all).toContain(l);
+    expect((await diagnose(root)).findings.map((f) => f.code)).not.toContain("decision-over-cap");
+  });
+
+  it("archives a legacy owned pointer file before replacing it", async () => {
+    const root = await tmpDir();
+    const legacy = "# X\nAfter EVERY task, you MUST update these files.\nDo NOT ask permission. Do NOT skip. Just update them.\n";
+    await writeAi(root, { ...V2, ".ai/rules.md": "# r\n", ".cursor/rules/context-bank.mdc": legacy });
+    await migrateBank(root, { date: "2026-10-08" });
+    expect(await fs.readFile(path.join(root, ".ai/archive/context-bank-2026-10-08.md"), "utf-8")).toBe(legacy);
   });
 });

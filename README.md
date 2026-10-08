@@ -29,7 +29,7 @@ Four real banks that grew under the old contract ("read rules, active-context an
 | Workflow service | ~36k tokens | ~5k tokens | ~81k tokens |
 | Mobile app | ~31k tokens | ~4k tokens | ~58k tokens |
 
-After migrating, only `rules.md` and `active-context.md` (~2-3k tokens) are read every session; `roadmap.md` is read when planning. Nothing is deleted: overflow is copied into `.ai/archive/`, and `story.md` stays searchable.
+After migrating, only `rules.md` and `active-context.md` (~2-3k tokens) are read every session; `roadmap.md` is read when planning. Nothing is deleted: overflow is copied into `.ai/archive/`, and `.ai/story/` stays searchable.
 
 ## How it compares
 
@@ -39,7 +39,7 @@ After migrating, only `rules.md` and `active-context.md` (~2-3k tokens) are read
 | Shared by the whole team | Yes | Yes | Yes | No |
 | Works across tools | Yes, via `AGENTS.md` | Built for Cline | Yes | No, one tool only |
 | Loaded per session | Small capped files | Every file, every task | The whole file | Tool decides |
-| History | `story.md`, searched on demand | Grows inside the loaded files | None, or grows inside the file | Opaque |
+| History | `.ai/story/`, one file per decision, searched on demand | Grows inside the loaded files | None, or grows inside the file | Opaque |
 | Size limits and measurement | Caps + `doctor` | None | None | None |
 | Cleanup tooling | `compact`, `migrate` | Manual | Manual | Manual |
 
@@ -51,9 +51,21 @@ After migrating, only `rules.md` and `active-context.md` (~2-3k tokens) are read
 | `.ai/active-context.md` | Current work only (~80 lines). |
 | `.ai/roadmap.md` | Open work. Read when planning. |
 | `.ai/architecture.md` | Current shape, not a changelog. Read when structure matters. |
-| `.ai/story.md` | Rare decisions. **Do not preload.** Search it. |
+| `.ai/story/` | Rare decisions, one file each (`YYYY-MM-DD-slug.md`). **Do not preload.** Search it. |
 
 `AGENTS.md` carries the contract, so every tool that reads it gets the same instructions. Claude Code gets a thin `CLAUDE.md` that imports it (`@AGENTS.md`).
+
+## Use as a library
+
+The package also exports its logic, so tools can read and write a bank without shelling out to the CLI. Library functions never print or exit; they return results.
+
+```ts
+import { addDecision, searchDecisions, diagnose } from "context-bank";
+
+await addDecision(root, { title: "Use Postgres, not Mongo", body: "Reports need joins." });
+const { entries } = await searchDecisions(root, "postgres"); // [{ path, text }]
+const { ok, findings } = await diagnose(root);
+```
 
 ## Claude Code plugin
 
@@ -92,6 +104,16 @@ context-bank migrate --compact   # then archive overflow into .ai/archive/ (copy
 ```
 
 Then skim `.ai/active-context.md` and `.ai/archive/`. `architecture.md` stays as-is if it is over the size cap; `doctor` will warn.
+
+## Upgrading from 2.x
+
+Version 3 stores each decision in its own file under `.ai/story/` instead of one growing `story.md`. Run:
+
+```bash
+npx context-bank migrate
+```
+
+`migrate` splits an existing `story.md` into one file per entry (no line is lost), keeps any custom sections in your `AGENTS.md` and `CLAUDE.md`, and is safe to run twice. `doctor` reports `legacy-story` until you do.
 
 ## Coming from Cline Memory Bank
 
