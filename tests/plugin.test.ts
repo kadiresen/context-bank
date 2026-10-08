@@ -24,7 +24,7 @@ describe("plugin and README on v3", () => {
 
   it("mentions story.md in README only inside the upgrade section", () => {
     const md = read("README.md");
-    const start = md.indexOf("## Upgrading from 2.x");
+    const start = md.indexOf("## Upgrading an existing bank");
     const end = md.indexOf("\n## ", start + 1);
     expect(start).toBeGreaterThan(-1);
     const outside = md.slice(0, start) + md.slice(end);

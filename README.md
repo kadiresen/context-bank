@@ -1,4 +1,6 @@
 <!-- AI-CONTEXT: .ai/rules.md -->
+<p align="center"><img src="plugin/.claude-plugin/icon.svg" width="112" height="112" alt="Context Bank logo: a vault at the tip of a git branch"></p>
+
 # Context Bank
 
 [![npm version](https://img.shields.io/npm/v/context-bank.svg)](https://www.npmjs.com/package/context-bank)
@@ -7,7 +9,7 @@
 
 **Your memory bank is eating your context window.** Context Bank keeps AI project memory small, in git, and shared by every tool your team uses.
 
-Memory-bank setups tell the agent to read every file at the start of every task and to append after every change. Banks grow without limit and each session pays for all of it. Context Bank inverts that: capped live files, history that is searched instead of preloaded, and a `doctor` command that measures the damage.
+Memory-bank setups tell the agent to read every file at the start of every task and to append after every change. Banks grow without limit and each session pays for all of it. Context Bank inverts that: capped live files, decisions kept one per file and searched instead of preloaded, and a `doctor` command that measures the damage.
 
 ![context-bank doctor finds a bloated v1 bank, migrate --compact fixes it, doctor reports healthy](docs/demo.svg)
 
@@ -55,25 +57,6 @@ After migrating, only `rules.md` and `active-context.md` (~2-3k tokens) are read
 
 `AGENTS.md` carries the contract, so every tool that reads it gets the same instructions. Claude Code gets a thin `CLAUDE.md` that imports it (`@AGENTS.md`).
 
-## Use as a library
-
-The package also exports its logic, so tools can read and write a bank without shelling out to the CLI. Library functions never print or exit; they return results.
-
-```ts
-import { addDecision, searchDecisions, diagnose } from "context-bank";
-
-await addDecision(root, { title: "Use Postgres, not Mongo", body: "Reports need joins." });
-const { entries } = await searchDecisions(root, "postgres"); // [{ path, text }]
-const { ok, findings } = await diagnose(root);
-```
-
-`addDecision` writes `.ai/story/<date>-<slug>[-<suffix>].md` and returns `{ path, date, title }`. Options:
-
-- `date`: `YYYY-MM-DD`; defaults to today (UTC).
-- `suffix`: a branch- or session-unique token (letters, digits and dashes, up to 32 characters) so two branches that add the same decision on the same day do not collide in git. Leave it out for no suffix; `""` is invalid. If the name is still taken, `-2`, `-3`, ... is added on top.
-
-It throws when the title is empty or the whole file (title, date line and body) would exceed 4,000 characters.
-
 ## Claude Code plugin
 
 ```bash
@@ -101,26 +84,22 @@ npx context-bank init --legacy-pointers
 
 `init` never overwrites an existing `.ai/` file or `AGENTS.md`. It is **not** an upgrade path.
 
-## Existing banks (v1)
+## Upgrading an existing bank
 
-`init` will not migrate you. Run:
-
-```bash
-context-bank migrate             # rewrite the v1 every-task contract; does not delete bank content
-context-bank migrate --compact   # then archive overflow into .ai/archive/ (copy, not delete)
-```
-
-Then skim `.ai/active-context.md` and `.ai/archive/`. `architecture.md` stays as-is if it is over the size cap; `doctor` will warn.
-
-## Upgrading from 2.x
-
-Version 3 stores each decision in its own file under `.ai/story/` instead of one growing `story.md`. Run:
+`init` will not upgrade you. For a v1 bank (the every-task contract) or a 2.x bank (one growing `story.md`), run:
 
 ```bash
-npx context-bank migrate
+npx context-bank migrate             # move the bank to v3
+npx context-bank migrate --compact   # also archive overflow into .ai/archive/ (copy, not delete)
 ```
 
-`migrate` splits an existing `story.md` into one file per entry (no line is lost), keeps any custom sections in your `AGENTS.md` and `CLAUDE.md`, and is safe to run twice. `doctor` reports `legacy-story` until you do.
+`migrate`:
+
+- replaces the old contract in `AGENTS.md` and `CLAUDE.md` and keeps any custom sections in them; a file that has to be rewritten whole is first copied to `.ai/archive/`,
+- splits `story.md` (and story entries an earlier `compact` archived) into one file per decision under `.ai/story/`, without losing a line,
+- is safe to run twice.
+
+Then skim `.ai/story/`, `.ai/active-context.md` and `.ai/archive/`. `architecture.md` stays as-is if it is over the size cap; `doctor` will warn. Until a 2.x bank is migrated, `doctor` reports `legacy-story`.
 
 ## Coming from Cline Memory Bank
 
@@ -142,14 +121,33 @@ The whole `memory-bank/` folder, extra docs included, is copied to `.ai/archive/
 ## Commands
 
 ```bash
-context-bank doctor              # size caps, leftover v1 contract, stale markers
-context-bank compact             # archive overflow into .ai/archive/
+context-bank doctor              # size caps, leftover v1 contract or 2.x story, stale markers
+context-bank compact             # archive active-context and roadmap overflow into .ai/archive/
 context-bank compact --dry-run
 context-bank migrate
 context-bank migrate --compact
 ```
 
 `init`, `compact` and `migrate` accept `--yes` to skip the confirmation prompt (useful in scripts and CI).
+
+## Use as a library
+
+The package also exports its logic, so other tools can read and maintain a bank without shelling out to the CLI: `initializeBank`, `diagnose`, `migrateBank`, `compactBank`, `bankVersion`, `addDecision`, `listDecisions` and `searchDecisions`. Library functions never print or exit; they return results.
+
+```ts
+import { addDecision, searchDecisions, diagnose } from "context-bank";
+
+await addDecision(root, { title: "Use Postgres, not Mongo", body: "Reports need joins." });
+const { entries } = await searchDecisions(root, "postgres"); // [{ path, text }]
+const { ok, findings } = await diagnose(root);
+```
+
+`addDecision` writes `.ai/story/<date>-<slug>[-<suffix>].md` and returns `{ path, date, title }`. Options:
+
+- `date`: `YYYY-MM-DD`; defaults to today (UTC).
+- `suffix`: a branch- or session-unique token (letters, digits and dashes, up to 32 characters) so two branches that add the same decision on the same day do not collide in git. Leave it out for no suffix; `""` is invalid. If the name is still taken, `-2`, `-3`, ... is added on top.
+
+It throws when the title is empty or the whole file (title, date line and body) would exceed 4,000 characters.
 
 ## License
 
