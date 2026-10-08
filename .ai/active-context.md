@@ -13,7 +13,7 @@ Current work only. Keep this file under ~80 lines. Older notes belong in `.ai/ar
 - Auto-indexers (awesomeclaudeplugins.com, claudemarketplaces.com, claude-plugins.dev, skillsmp.com): check pickup around 2026-10-03.
 
 ## Next Steps
-- Launch day: publish the article, then fill `<ARTICLE_URL>` in `docs/launch/*`; Show HN 14:00-16:00 UTC; Reddit a few hours apart; X thread with the MP4.
+- Launch day 2026-10-08: article published at https://dev.to/kadiresen/my-ai-memory-bank-grew-to-240k-tokens-per-session-here-is-what-i-got-wrong-368 (URL filled in `docs/launch/*`). Next: Show HN 14:00-16:00 UTC, Reddit a few hours apart, X thread with the MP4.
 - After launch: VoltAgent/awesome-agent-skills and BehiSecc/awesome-claude-skills once the repo has more stars.
 - Compact remaining personal banks (motoatolye2-web, motoatolye-web, coditor-platform) with v3.0.0.
 - v3.0.1 (2026-10-08) fixes two migrate bugs: an undated story heading now takes its nearest dated neighbour's date (not the migration day) and is listed in a note; removed sources print as `removed`, and `migrateBank` returns `removed`.

@@ -37,7 +37,7 @@ Also converts a Cline Memory Bank, and ships as a Claude Code plugin (skill + si
 npx context-bank doctor
 github.com/kadiresen/context-bank
 
-Full write-up: <ARTICLE_URL>
+Full write-up: https://dev.to/kadiresen/my-ai-memory-bank-grew-to-240k-tokens-per-session-here-is-what-i-got-wrong-368
 
 ---
 

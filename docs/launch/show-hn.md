@@ -26,7 +26,7 @@ Same three files before/after on those projects: 241k -> 5k, 119k -> 5k, 36k -> 
 
 Why not native tool memory: it is per user and per tool. This lives in the repo, gets reviewed in PRs and is shared by the team.
 
-Write-up with the details: <ARTICLE_URL>
+Write-up with the details: https://dev.to/kadiresen/my-ai-memory-bank-grew-to-240k-tokens-per-session-here-is-what-i-got-wrong-368
 
 Try it: `npx context-bank doctor` on an existing bank, or `npx context-bank init`. MIT. Happy to hear how others keep agent memory from growing.
 ```

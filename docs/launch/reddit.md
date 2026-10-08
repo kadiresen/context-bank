@@ -24,7 +24,7 @@ Same files after: ~4-5k tokens.
 It is also a Claude Code plugin now: a skill with the read/write rules, a session-start check that stays silent unless the bank is bloated, and /context-bank:doctor, :compact, :init.
 
 Repo (MIT): https://github.com/kadiresen/context-bank
-Write-up: <ARTICLE_URL>
+Write-up: https://dev.to/kadiresen/my-ai-memory-bank-grew-to-240k-tokens-per-session-here-is-what-i-got-wrong-368
 
 Curious how others keep CLAUDE.md or memory files from growing.
 ```
@@ -51,7 +51,7 @@ What worked:
 After: ~4-5k tokens for the same files, nothing deleted (overflow archived).
 
 I packaged this as an open-source CLI (context-bank: doctor / compact / migrate, also converts a Cline Memory Bank): https://github.com/kadiresen/context-bank
-Details and numbers: <ARTICLE_URL>
+Details and numbers: https://dev.to/kadiresen/my-ai-memory-bank-grew-to-240k-tokens-per-session-here-is-what-i-got-wrong-368
 ```
 
 ---
@@ -66,5 +66,5 @@ If you share project context between Cursor and other agents, AGENTS.md plus a f
 Mine grew to ~31k-241k tokens read before every task, because my instructions told agents to update the memory files after every task. Fix: current work in one short file, decisions in a searched-not-preloaded file, size caps, and a doctor command that measures them. Same files now: ~4-5k tokens.
 
 Open-source CLI (MIT), works with anything that reads AGENTS.md: https://github.com/kadiresen/context-bank
-Write-up: <ARTICLE_URL>
+Write-up: https://dev.to/kadiresen/my-ai-memory-bank-grew-to-240k-tokens-per-session-here-is-what-i-got-wrong-368
 ```
