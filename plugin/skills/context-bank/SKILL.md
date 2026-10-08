@@ -44,7 +44,7 @@ Do not touch every context file on each change. Git already records what changed
 
 ## Keeping it healthy
 
-- Run `npx -y context-bank@3.0.0 doctor` to check caps, leftover v1 "update after every task" instructions, a single-file v2 story, and stale markers.
-- If a file is over its cap, run `npx -y context-bank@3.0.0 compact --dry-run`, show the user what would move, and compact only with their approval. Overflow is copied to `.ai/archive/`, never deleted.
+- Run `npx -y context-bank@3.0.1 doctor` to check caps, leftover v1 "update after every task" instructions, a single-file v2 story, and stale markers.
+- If a file is over its cap, run `npx -y context-bank@3.0.1 compact --dry-run`, show the user what would move, and compact only with their approval. Overflow is copied to `.ai/archive/`, never deleted.
 - `architecture.md` is never compacted automatically. If it is over the cap, propose a rewrite that keeps only the current shape.
-- A bank still on the v1 or v2 layout needs `npx -y context-bank@3.0.0 migrate` (with the user's approval); it moves the v2 single-file story into `.ai/story/`, one file per decision.
+- A bank still on the v1 or v2 layout needs `npx -y context-bank@3.0.1 migrate` (with the user's approval); it moves the v2 single-file story into `.ai/story/`, one file per decision.
