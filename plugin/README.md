@@ -26,7 +26,7 @@ Node.js with `npx`, in Claude Code. The session-start check needs a local shell,
 
 ## What it runs, fetches and sends
 
-- **Runs** the published `context-bank` CLI pinned to an exact version: `npx -y context-bank@3.0.2`. The session-start hook runs `doctor` (read-only). `/context-bank:compact` and `/context-bank:init` write files only in your project, and only after you confirm.
+- **Runs** the published `context-bank` CLI pinned to an exact version: `npx -y context-bank@3.0.3`. The session-start hook runs `doctor` (read-only). `/context-bank:compact` and `/context-bank:init` write files only in your project, and only after you confirm.
 - **Fetches** that one package (and its dependencies) from the public npm registry on first run; npx caches it afterwards. The hook exits silently if npm is unreachable.
 - **Sends** nothing. The plugin makes no network requests of its own, collects no telemetry and reads no credentials.
 - **Reads** only the project's `.ai/`, `AGENTS.md`, `CLAUDE.md`, `memory-bank/` and `.clinerules` files.
