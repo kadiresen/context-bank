@@ -3,9 +3,9 @@
 Open work. Move long completed lists to `.ai/archive/` so this file stays skimmable.
 
 ## Upcoming
-- [ ] Publish v3.0.0 to npm (owner), then start the Coditor integration plan
+- [x] Publish v3 to npm; Algeplus integration done (3.0.3)
 - [ ] Growth plan launch (Workstream 4): drafts in `docs/launch/`, user publishes
-- [ ] Compact remaining personal banks (motoatolye2-web, motoatolye-web, coditor-platform)
+- [ ] Compact remaining personal banks (motoatolye2-web, motoatolye-web)
 
 ## Not now
 - Language/framework template picker

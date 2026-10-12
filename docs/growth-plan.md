@@ -1,6 +1,6 @@
 # Growth Plan
 
-Working plan to make Context Bank discoverable and adopted. Written 2026-09-26 from a review session (started in the coditor-platform repo). Execute top to bottom; tick boxes as work lands.
+Working plan to make Context Bank discoverable and adopted. Written 2026-09-26 from a review session (started in the algeplus-core repo). Execute top to bottom; tick boxes as work lands.
 
 ## Baseline (2026-09-26)
 - GitHub: 9 stars, 1 fork, no topics, no homepage.
@@ -66,5 +66,5 @@ Skipped: inactive or no merges (ComposioHQ, travisvn, heilcheng, Meirtz, composi
 - [ ] Reddit: r/ClaudeAI, r/ChatGPTCoding, r/cursor. Share the article and numbers, not an ad.
 - [ ] X/Twitter thread with the number and the demo GIF.
 
-## Long-term lever: Coditor
-Coditor (../coditor-platform, provider-agnostic multi-agent dev platform) may adopt the `.ai/` contract as its per-project context format. Every project run on Coditor would then use Context Bank. Keep the contract stable and documented as a spec with that in mind. Open design question on the Coditor side: agents must not be able to loosen `rules.md` without approval.
+## Long-term lever: Algeplus
+Algeplus (../algevo/algeplus-core, provider-agnostic multi-agent dev platform) uses the `.ai/` contract as its per-project context format since context-bank 3, so every project run on Algeplus uses Context Bank. Keep the contract stable and documented as a spec with that in mind. Agents cannot loosen `rules.md` silently: rule changes reach the project only through the run's pull request, flagged with a warning.
